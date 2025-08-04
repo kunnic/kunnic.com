@@ -24,6 +24,3 @@ class SongViewSet(viewsets.ModelViewSet):
     queryset = Song.objects.all().order_by('-release_date')
     serializer_class = SongSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)

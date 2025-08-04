@@ -12,7 +12,7 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['id', 'title', 'slug', 'content', 'is_published', 'published_at', 'updated_at', 'created_at', 'author']
+        fields = ['id', 'title', 'slug', 'content', 'is_published', 'published_at', 'updated_at', 'created_at', 'author', 'clap']
         read_only_fields = ['slug', 'author', 'updated_at', 'created_at']
 
 class GalleryImageSerializer(serializers.ModelSerializer):
