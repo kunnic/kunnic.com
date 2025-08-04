@@ -18,8 +18,10 @@
       <sourceFolder url="file://$MODULE_DIR$/backend" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/frontend" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/.venv/Lib" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/.venv/Scripts" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.12 (kunnic.com)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (backend)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
