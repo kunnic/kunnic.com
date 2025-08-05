@@ -1,1 +1,122 @@
 @import "tailwindcss";
+
+/* Ensure full height for the application */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Interactive window styles */
+.window-draggable {
+  cursor: move;
+}
+
+.window-draggable:active {
+  cursor: grabbing;
+}
+
+/* Disable text selection during dragging/resizing */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Window resize cursors */
+.resize-handle {
+  position: absolute;
+}
+
+.resize-handle.n {
+  top: 0;
+  left: 5px;
+  right: 5px;
+  height: 5px;
+  cursor: n-resize;
+}
+
+.resize-handle.s {
+  bottom: 0;
+  left: 5px;
+  right: 5px;
+  height: 5px;
+  cursor: s-resize;
+}
+
+.resize-handle.e {
+  top: 5px;
+  right: 0;
+  bottom: 5px;
+  width: 5px;
+  cursor: e-resize;
+}
+
+.resize-handle.w {
+  top: 5px;
+  left: 0;
+  bottom: 5px;
+  width: 5px;
+  cursor: w-resize;
+}
+
+.resize-handle.ne {
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  cursor: ne-resize;
+}
+
+.resize-handle.nw {
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  cursor: nw-resize;
+}
+
+.resize-handle.se {
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  cursor: se-resize;
+}
+
+.resize-handle.sw {
+  bottom: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  cursor: sw-resize;
+}
+
+/* Additional window interaction styles */
+.window-title-bar {
+  user-select: none;
+  cursor: move;
+}
+
+.window-title-bar:active {
+  cursor: grabbing;
+}
+
+/* Prevent interference during drag/resize operations */
+.test-window.interact-dragging,
+.test-window.interact-resizing {
+  user-select: none;
+}
+
+.test-window.interact-dragging *,
+.test-window.interact-resizing * {
+  pointer-events: none;
+}
+
+/* Allow buttons to still work */
+.test-window.interact-dragging button,
+.test-window.interact-resizing button {
+  pointer-events: auto;
+}

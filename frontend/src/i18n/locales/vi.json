@@ -1,0 +1,39 @@
+{
+  "nav": {
+    "blog": "Suy Tưởng",
+    "music": "Âm Nhạc", 
+    "gallery": "Thần Tượng",
+    "start": "kunnic"
+  },
+  "pages": {
+    "blog": {
+      "title": "Suy Tưởng",
+      "loading": "Đang tải...",
+      "error": "Có lỗi xảy ra khi tải bài viết.",
+      "readMore": "Đọc thêm",
+      "backToList": "Quay lại danh sách"
+    },
+    "music": {
+      "title": "Âm Nhạc",
+      "loading": "Đang tải nhạc...",
+      "error": "Không thể tải danh sách nhạc.",
+      "play": "Phát",
+      "pause": "Tạm dừng",
+      "nowPlaying": "Đang phát"
+    },
+    "gallery": {
+      "title": "Thần Tượng", 
+      "loading": "Đang tải hình ảnh...",
+      "error": "Không thể tải thư viện ảnh."
+    }
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Đã có lỗi xảy ra",
+    "retry": "Thử lại",
+    "close": "Đóng"
+  },
+  "time": {
+    "format": "HH:mm"
+  }
+}
