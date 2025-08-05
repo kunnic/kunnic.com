@@ -61,3 +61,17 @@ class GalleryImage(models.Model):
 
     def __str__(self):
         return self.image.name
+
+class Comment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments', verbose_name="Post", help_text="Post to which the comment belongs")
+    author = models.CharField(max_length=500, verbose_name="Author", help_text="Name of the comment author")
+    content = models.TextField(verbose_name="Content", help_text="Content of the comment")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At", help_text="Date and time when the comment was created")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Comment"
+        verbose_name_plural = "Comments"
+
+    def __str__(self):
+        return f"Comment by {self.author} on {self.post.title}"

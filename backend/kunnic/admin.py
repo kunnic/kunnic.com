@@ -1,5 +1,5 @@
 from django.contrib import admin
-from kunnic.models import Post,Song,GalleryImage
+from kunnic.models import Post, Song, GalleryImage, Comment
 # Register your models here.
 
 @admin.register(Post)
@@ -23,3 +23,10 @@ class GalleryAdmin(admin.ModelAdmin):
     search_fields = ('caption',)
     ordering = ('-upload_date',)
     readonly_fields = ('upload_date',)
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('post', 'author', 'content', 'created_at')
+    search_fields = ('content',)
+    list_filter = ('created_at',)
+    ordering = ('-created_at',)

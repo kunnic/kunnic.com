@@ -1,0 +1,120 @@
+# Test Plan for "kunnic" Django REST API
+
+This document outlines the test cases for the Django REST Framework API. The goal is to ensure the reliability, security, and correctness of all endpoints. The tests should be written using Django's APITestCase.
+
+## 1. Posts API (/api/posts/)
+
+### Test Case 1.1: List Published Posts
+- **Description:** Verify that the API endpoint `GET /api/posts/` correctly returns a paginated list of posts where `is_published` is True.
+- **Setup:**
+  - Create one User (`testuser`).
+  - Create two Post objects by `testuser`:
+    - `post_published` with `is_published=True`.
+    - `post_unpublished` with `is_published=False`.
+- **Action:**
+  - Perform a `GET` request to the `/api/posts/` endpoint.
+- **Expected Result:**
+  - Status Code: 200 OK.
+  - The JSON response `results` array should contain exactly 1 post.
+  - The post in the response should be `post_published`.
+  - The post `post_unpublished` must not be in the response.
+
+### Test Case 1.2: Retrieve a Single Published Post
+- **Description:** Verify that `GET /api/posts/{slug}/` returns the correct details for a single published post.
+- **Setup:**
+  - Create one User (`testuser`).
+  - Create one Post (`post_published`) with a known slug (e.g., "my-published-post") and `is_published=True`.
+- **Action:**
+  - Perform a `GET` request to `/api/posts/my-published-post/`.
+- **Expected Result:**
+  - Status Code: 200 OK.
+  - The JSON response should contain the correct `title`, `slug`, `content`, and `author` details for `post_published`.
+
+### Test Case 1.3: Attempt to Retrieve an Unpublished Post
+- **Description:** Verify that trying to access an unpublished post via its slug returns a 404 Not Found error.
+- **Setup:**
+  - Create one User (`testuser`).
+  - Create one Post (`post_unpublished`) with a known slug (e.g., "my-unpublished-post") and `is_published=False`.
+- **Action:**
+  - Perform a `GET` request to `/api/posts/my-unpublished-post/`.
+- **Expected Result:**
+  - Status Code: 404 Not Found.
+
+### Test Case 1.4: Create a Post as an Authenticated User
+- **Description:** Verify that a logged-in user can successfully create a new post via a `POST` request.
+- **Setup:**
+  - Create one User (`testuser`).
+- **Action:**
+  - Authenticate as `testuser`.
+  - Perform a `POST` request to `/api/posts/` with valid data for `title` and `content`.
+- **Expected Result:**
+  - Status Code: 201 Created.
+  - The new post should be created in the database.
+  - The `author` of the new post must be `testuser`.
+  - The `slug` should be automatically generated from the title.
+
+### Test Case 1.5: Attempt to Create a Post as an Unauthenticated User
+- **Description:** Verify that an unauthenticated (guest) user cannot create a post.
+- **Action:**
+  - Perform a `POST` request to `/api/posts/` with valid data for `title` and `content` without authentication.
+- **Expected Result:**
+  - Status Code: 401 Unauthorized or 403 Forbidden.
+
+## 2. Comments API (/api/posts/{slug}/comments/)
+
+### Test Case 2.1: List Comments for a Post
+- **Description:** Verify that `GET /api/posts/{slug}/comments/` returns all comments for a specific post.
+- **Setup:**
+  - Create one User (`testuser`).
+  - Create one Post (`test_post`).
+  - Create two Comment objects associated with `test_post`.
+- **Action:**
+  - Perform a `GET` request to `/api/posts/{test_post.slug}/comments/`.
+- **Expected Result:**
+  - Status Code: 200 OK.
+  - The JSON response should be an array containing exactly 2 comment objects.
+
+### Test Case 2.2: Create a Comment for a Post
+- **Description:** Verify that anyone (authenticated or not) can post a comment to an existing post.
+- **Setup:**
+  - Create one User (`testuser`).
+  - Create one Post (`test_post`).
+- **Action:**
+  - Perform a `POST` request to `/api/posts/{test_post.slug}/comments/` with valid data for `author_name` and `text`.
+- **Expected Result:**
+  - Status Code: 201 Created.
+  - A new comment should be associated with `test_post` in the database.
+  - The response should contain the data of the newly created comment.
+
+### Test Case 2.3: Attempt to Create a Comment with Invalid Data
+- **Description:** Verify that posting a comment with missing data (e.g., no `text`) returns a validation error.
+- **Setup:**
+  - Create one User (`testuser`).
+  - Create one Post (`test_post`).
+- **Action:**
+  - Perform a `POST` request to `/api/posts/{test_post.slug}/comments/` with data containing `author_name` but missing the `text` field.
+- **Expected Result:**
+  - Status Code: 400 Bad Request.
+  - The JSON response should contain an error message indicating that the `text` field is required.
+
+## 3. Songs & Gallery API (Read-Only)
+
+### Test Case 3.1: List Songs
+- **Description:** Verify that `GET /api/songs/` returns a list of all songs.
+- **Setup:**
+  - Create two Song objects.
+- **Action:**
+  - Perform a `GET` request to `/api/songs/`.
+- **Expected Result:**
+  - Status Code: 200 OK.
+  - The JSON response `results` array should contain 2 song objects.
+
+### Test Case 3.2: List Gallery Images
+- **Description:** Verify that `GET /api/gallery/` returns a list of all gallery images.
+- **Setup:**
+  - Create two GalleryImage objects.
+- **Action:**
+  - Perform a `GET` request to `/api/gallery/`.
+- **Expected Result:**
+  - Status Code: 200 OK.
+  - The JSON response `results` array should contain 2 gallery image objects.
