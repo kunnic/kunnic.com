@@ -1,0 +1,39 @@
+{
+  "nav": {
+    "blog": "Blog",
+    "music": "Music", 
+    "gallery": "Gallery",
+    "start": "kunnic"
+  },
+  "pages": {
+    "blog": {
+      "title": "Blog",
+      "loading": "Loading...",
+      "error": "Error loading posts.",
+      "readMore": "Read more",
+      "backToList": "Back to list"
+    },
+    "music": {
+      "title": "Music",
+      "loading": "Loading music...",
+      "error": "Unable to load music list.",
+      "play": "Play",
+      "pause": "Pause",
+      "nowPlaying": "Now playing"
+    },
+    "gallery": {
+      "title": "Gallery", 
+      "loading": "Loading images...",
+      "error": "Unable to load gallery."
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "close": "Close"
+  },
+  "time": {
+    "format": "h:mm A"
+  }
+}

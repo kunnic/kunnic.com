@@ -93,3 +93,20 @@ temp/
 
 # Yarn Integrity file
 .yarn-integrity
+
+# Assets - ignore to save memory on GitHub
+src/assets/
+public/assets/
+# Keep essential assets but ignore large asset libraries
+src/assets/icons/phosphor-icons/
+# Ignore large image files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.webp
+# But keep essential small images
+!src/assets/images/kunnic_icon.png
+!src/assets/images/front_image.png
