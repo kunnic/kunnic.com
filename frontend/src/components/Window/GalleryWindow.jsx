@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import interact from 'interactjs';
 import axiosClient from '../../api/axiosClient';
 
-const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
+const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = false }) => {
   const windowRef = useRef(null);
   const [windowState, setWindowState] = useState({
     x: 250,
@@ -485,11 +485,6 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
   const handleMinimize = () => {
     if (onMinimize) {
       onMinimize();
-    } else {
-      const windowElement = windowRef.current;
-      if (windowElement) {
-        windowElement.style.display = 'none';
-      }
     }
   };
 
@@ -497,7 +492,7 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
     <>
       <div
         ref={windowRef}
-        className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'}`}
+        className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'} ${isMinimized ? 'hidden' : ''}`}
         style={{
           width: `${windowState.width}px`,
           height: `${windowState.height}px`,
@@ -506,8 +501,8 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
           userSelect: 'none',
           zIndex: zIndex
         }}
-        onMouseDown={() => onFocus && onFocus()}
-        onClick={() => onFocus && onFocus()}
+        onMouseDown={() => !isMinimized && onFocus && onFocus()}
+        onClick={() => !isMinimized && onFocus && onFocus()}
       >
         {/* Title Bar */}
         <div 

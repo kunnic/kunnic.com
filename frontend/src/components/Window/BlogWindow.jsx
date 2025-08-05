@@ -4,7 +4,7 @@ import interact from 'interactjs';
 import axiosClient from '../../api/axiosClient';
 import { useLanguage } from '../../i18n';
 
-const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
+const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = false }) => {
   const { t } = useLanguage();
   const windowRef = useRef(null);
   const [posts, setPosts] = useState([]);
@@ -547,7 +547,7 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
   return (
     <div
       ref={windowRef}
-      className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'}`}
+      className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'} ${isMinimized ? 'hidden' : ''}`}
       style={{
         width: `${windowState.width}px`,
         height: `${windowState.height}px`,
@@ -556,8 +556,8 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
         userSelect: 'none',
         zIndex: zIndex
       }}
-      onMouseDown={() => onFocus && onFocus()}
-      onClick={() => onFocus && onFocus()}
+      onMouseDown={() => !isMinimized && onFocus && onFocus()}
+      onClick={() => !isMinimized && onFocus && onFocus()}
     >
       {/* Title Bar */}
       <div 

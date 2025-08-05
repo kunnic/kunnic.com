@@ -2,68 +2,76 @@
 import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './NavBar';
-import TestWindow from './Window/TestWindow';
 import BlogWindow from './Window/BlogWindow';
 import MusicWindow from './Window/MusicWindow';
+import GalleryWindow from './Window/GalleryWindow';
 
 function Layout() {
-  const [showTestWindow, setShowTestWindow] = useState(false);
   const [showBlogWindow, setShowBlogWindow] = useState(false);
   const [showMusicWindow, setShowMusicWindow] = useState(false);
-  const [testWindowMinimized, setTestWindowMinimized] = useState(false);
+  const [showGalleryWindow, setShowGalleryWindow] = useState(false);
   const [blogWindowMinimized, setBlogWindowMinimized] = useState(false);
   const [musicWindowMinimized, setMusicWindowMinimized] = useState(false);
+  const [galleryWindowMinimized, setGalleryWindowMinimized] = useState(false);
   const [focusedWindow, setFocusedWindow] = useState(null);
-  const [windowZIndex, setWindowZIndex] = useState(40); // Base z-index for windows
-
-  const toggleTestWindow = () => {
-    if (!showTestWindow) {
-      // Open the window
-      setShowTestWindow(true);
-      setTestWindowMinimized(false);
-      bringWindowToFront('test');
-    } else if (focusedWindow === 'test' && !testWindowMinimized) {
-      // If window is focused and visible, minimize it
-      setTestWindowMinimized(true);
-      setFocusedWindow(null);
-    } else {
-      // If window is minimized or not focused, restore and focus it
-      setTestWindowMinimized(false);
-      bringWindowToFront('test');
-    }
-  };
-
-  const closeTestWindow = () => {
-    setShowTestWindow(false);
-    setTestWindowMinimized(false);
-    if (focusedWindow === 'test') {
-      setFocusedWindow(null);
-    }
-  };
 
   const toggleBlogWindow = () => {
     if (!showBlogWindow) {
       // Open the window
       setShowBlogWindow(true);
       setBlogWindowMinimized(false);
-      bringWindowToFront('blog');
-    } else if (focusedWindow === 'blog' && !blogWindowMinimized) {
-      // If window is focused and visible, minimize it
+      setFocusedWindow('blog');
+    } else if (!blogWindowMinimized) {
+      // If window is visible, minimize it
       setBlogWindowMinimized(true);
       setFocusedWindow(null);
     } else {
-      // If window is minimized or not focused, restore and focus it
+      // If window is minimized, restore it
       setBlogWindowMinimized(false);
-      bringWindowToFront('blog');
+      setFocusedWindow('blog');
     }
+  };
+
+  // Helper function to find and focus the topmost open window after an action
+  const focusTopWindow = (excludeWindow = null) => {
+    // Define priority order for windows (can be customized)
+    const windowPriority = ['blog', 'music', 'gallery'];
+    
+    // Find the highest priority open and visible window (excluding the specified window)
+    for (const windowId of windowPriority) {
+      if (windowId === excludeWindow) continue; // Skip the window being closed/minimized
+      
+      if (windowId === 'blog' && showBlogWindow && !blogWindowMinimized) {
+        setFocusedWindow('blog');
+        return;
+      }
+      if (windowId === 'music' && showMusicWindow && !musicWindowMinimized) {
+        setFocusedWindow('music');
+        return;
+      }
+      if (windowId === 'gallery' && showGalleryWindow && !galleryWindowMinimized) {
+        setFocusedWindow('gallery');
+        return;
+      }
+    }
+    
+    // If no windows are open, clear focus
+    setFocusedWindow(null);
+  };
+
+  // Get window z-index based on focus - focused window gets highest z-index
+  const getWindowZIndex = (windowId) => {
+    if (focusedWindow === windowId) {
+      return 50; // Highest z-index for focused window
+    }
+    return 40; // Lower z-index for unfocused windows
   };
 
   const closeBlogWindow = () => {
     setShowBlogWindow(false);
     setBlogWindowMinimized(false);
-    if (focusedWindow === 'blog') {
-      setFocusedWindow(null);
-    }
+    // Always refocus to the next highest priority window (excluding blog)
+    focusTopWindow('blog');
   };
 
   const toggleMusicWindow = () => {
@@ -71,48 +79,57 @@ function Layout() {
       // Open the window
       setShowMusicWindow(true);
       setMusicWindowMinimized(false);
-      bringWindowToFront('music');
-    } else if (focusedWindow === 'music' && !musicWindowMinimized) {
-      // If window is focused and visible, minimize it
+      setFocusedWindow('music');
+    } else if (!musicWindowMinimized) {
+      // If window is visible, minimize it
       setMusicWindowMinimized(true);
       setFocusedWindow(null);
     } else {
-      // If window is minimized or not focused, restore and focus it
+      // If window is minimized, restore it
       setMusicWindowMinimized(false);
-      bringWindowToFront('music');
+      setFocusedWindow('music');
     }
   };
 
   const closeMusicWindow = () => {
     setShowMusicWindow(false);
     setMusicWindowMinimized(false);
-    if (focusedWindow === 'music') {
+    // Always refocus to the next highest priority window (excluding music)
+    focusTopWindow('music');
+  };
+
+  const toggleGalleryWindow = () => {
+    if (!showGalleryWindow) {
+      // Open the window
+      setShowGalleryWindow(true);
+      setGalleryWindowMinimized(false);
+      setFocusedWindow('gallery');
+    } else if (!galleryWindowMinimized) {
+      // If window is visible, minimize it
+      setGalleryWindowMinimized(true);
       setFocusedWindow(null);
+    } else {
+      // If window is minimized, restore it
+      setGalleryWindowMinimized(false);
+      setFocusedWindow('gallery');
     }
   };
 
-  const bringWindowToFront = (windowId) => {
+  const closeGalleryWindow = () => {
+    setShowGalleryWindow(false);
+    setGalleryWindowMinimized(false);
+    // Always refocus to the next highest priority window (excluding gallery)
+    focusTopWindow('gallery');
+  };
+
+  // Simple focus function
+  const focusWindow = (windowId) => {
     setFocusedWindow(windowId);
-    setWindowZIndex(prev => prev + 1);
-  };
-
-  // Calculate z-index for each window
-  const getWindowZIndex = (windowId) => {
-    if (focusedWindow === windowId) {
-      return windowZIndex;
-    }
-    return 40; // Base z-index for unfocused windows
   };
 
   // Get window state for taskbar button styling
   const getWindowState = (windowId) => {
-    if (windowId === 'test') {
-      return {
-        isOpen: showTestWindow,
-        isMinimized: testWindowMinimized,
-        isFocused: focusedWindow === 'test'
-      };
-    } else if (windowId === 'blog') {
+    if (windowId === 'blog') {
       return {
         isOpen: showBlogWindow,
         isMinimized: blogWindowMinimized,
@@ -124,49 +141,75 @@ function Layout() {
         isMinimized: musicWindowMinimized,
         isFocused: focusedWindow === 'music'
       };
+    } else if (windowId === 'gallery') {
+      return {
+        isOpen: showGalleryWindow,
+        isMinimized: galleryWindowMinimized,
+        isFocused: focusedWindow === 'gallery'
+      };
     }
     return { isOpen: false, isMinimized: false, isFocused: false };
   };
 
   return (
-    // bg-white: nền trắng, text-gray-800: màu chữ xám đậm, min-h-screen: chiều cao tối thiểu full screen
-    <div className="bg-white text-gray-800 font-sans min-h-screen flex flex-col">
-      {/* max-w-5xl: chiều rộng tối đa, mx-auto: căn giữa, px-4/sm:px-6/lg:px-8: padding ngang thay đổi theo kích thước màn hình */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex-1 flex flex-col">
-        <main className="py-8 sm:py-12 flex-1 pb-20"> {/* pb-20: reduced padding bottom for new taskbar height */}
-          <Outlet />
-        </main>
+    // Desktop interface with taskbar
+    <div className="min-h-screen h-screen flex flex-col relative bg-white">
+      {/* Desktop Area */}
+      <main className="flex-1 relative overflow-hidden">
+        <Outlet />
+      </main>
+      
+      {/* Taskbar */}
+      <div className="absolute bottom-0 left-0 right-0">
         <Navbar 
-          onToggleTestWindow={toggleTestWindow} 
           onToggleBlogWindow={toggleBlogWindow}
           onToggleMusicWindow={toggleMusicWindow}
+          onToggleGalleryWindow={toggleGalleryWindow}
           getWindowState={getWindowState}
         />
       </div>
       
       {/* Windows */}
-      {showTestWindow && !testWindowMinimized && (
-        <TestWindow 
-          onClose={closeTestWindow} 
-          onFocus={() => bringWindowToFront('test')}
-          onMinimize={() => setTestWindowMinimized(true)}
-          zIndex={getWindowZIndex('test')}
-        />
-      )}
-      {showBlogWindow && !blogWindowMinimized && (
+      {showBlogWindow && (
         <BlogWindow 
           onClose={closeBlogWindow}
-          onFocus={() => bringWindowToFront('blog')}
-          onMinimize={() => setBlogWindowMinimized(true)}
+          onFocus={() => focusWindow('blog')}
+          onMinimize={() => {
+            setBlogWindowMinimized(true);
+            if (focusedWindow === 'blog') {
+              focusTopWindow('blog');
+            }
+          }}
           zIndex={getWindowZIndex('blog')}
+          isMinimized={blogWindowMinimized}
         />
       )}
-      {showMusicWindow && !musicWindowMinimized && (
+      {showMusicWindow && (
         <MusicWindow 
           onClose={closeMusicWindow}
-          onFocus={() => bringWindowToFront('music')}
-          onMinimize={() => setMusicWindowMinimized(true)}
+          onFocus={() => focusWindow('music')}
+          onMinimize={() => {
+            setMusicWindowMinimized(true);
+            if (focusedWindow === 'music') {
+              focusTopWindow('music');
+            }
+          }}
           zIndex={getWindowZIndex('music')}
+          isMinimized={musicWindowMinimized}
+        />
+      )}
+      {showGalleryWindow && (
+        <GalleryWindow 
+          onClose={closeGalleryWindow}
+          onFocus={() => focusWindow('gallery')}
+          onMinimize={() => {
+            setGalleryWindowMinimized(true);
+            if (focusedWindow === 'gallery') {
+              focusTopWindow('gallery');
+            }
+          }}
+          zIndex={getWindowZIndex('gallery')}
+          isMinimized={galleryWindowMinimized}
         />
       )}
     </div>

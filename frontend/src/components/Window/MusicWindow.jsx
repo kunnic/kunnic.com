@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import interact from 'interactjs';
 import axiosClient from '../../api/axiosClient';
 
-const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
+const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = false }) => {
   const windowRef = useRef(null);
   const audioRef = useRef(null);
   const [windowState, setWindowState] = useState({
@@ -18,7 +18,7 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
   const [originalState, setOriginalState] = useState({
     x: 200,
     y: 120,
-    width: 500,
+    width: 400,
     height: 400
   });
 
@@ -626,7 +626,7 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
   return (
     <div
       ref={windowRef}
-      className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'}`}
+      className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'} ${isMinimized ? 'hidden' : ''}`}
       style={{
         width: `${windowState.width}px`,
         height: `${windowState.height}px`,
@@ -635,8 +635,8 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
         userSelect: 'none',
         zIndex: zIndex
       }}
-      onMouseDown={() => onFocus && onFocus()}
-      onClick={() => onFocus && onFocus()}
+      onMouseDown={() => !isMinimized && onFocus && onFocus()}
+      onClick={() => !isMinimized && onFocus && onFocus()}
     >
       {/* Title Bar */}
       <div 

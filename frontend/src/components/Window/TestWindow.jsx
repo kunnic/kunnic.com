@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import interact from 'interactjs';
 
-const TestWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
+const TestWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = false }) => {
   const windowRef = useRef(null);
   const [windowState, setWindowState] = useState({
     x: 100,
@@ -496,7 +496,7 @@ const TestWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
   return (
     <div
       ref={windowRef}
-      className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'}`}
+      className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'} ${isMinimized ? 'hidden' : ''}`}
       style={{
         width: `${windowState.width}px`,
         height: `${windowState.height}px`,
@@ -505,8 +505,8 @@ const TestWindow = ({ onClose, onFocus, zIndex = 40, onMinimize }) => {
         userSelect: 'none',
         zIndex: zIndex
       }}
-      onMouseDown={() => onFocus && onFocus()}
-      onClick={() => onFocus && onFocus()}
+      onMouseDown={() => !isMinimized && onFocus && onFocus()}
+      onClick={() => !isMinimized && onFocus && onFocus()}
     >
       {/* Title Bar */}
       <div 

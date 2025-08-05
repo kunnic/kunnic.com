@@ -2,16 +2,15 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import TaskbarButton from './TaskbarButton';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useLanguage } from '../i18n';
 
-function Navbar({ onToggleTestWindow, onToggleBlogWindow, onToggleMusicWindow, getWindowState }) {
+function Navbar({ onToggleBlogWindow, onToggleMusicWindow, onToggleGalleryWindow, getWindowState }) {
   const { t } = useLanguage();
   
-  const testWindowState = getWindowState('test');
   const blogWindowState = getWindowState('blog');
   const musicWindowState = getWindowState('music');
+  const galleryWindowState = getWindowState('gallery');
   
   return (
     // Fixed positioning at bottom, full width, with background and shadow
@@ -29,71 +28,63 @@ function Navbar({ onToggleTestWindow, onToggleBlogWindow, onToggleMusicWindow, g
           
           {/* Taskbar buttons */}
           <div className="flex gap-2">
-            <TaskbarButton to="/" icon="blog" label={t('nav.blog')} />
             <button
               onClick={onToggleMusicWindow}
-              className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-100 active:bg-gray-200 min-w-[60px] max-w-[80px] ${
-                musicWindowState.isFocused 
-                  ? 'bg-blue-100 text-blue-600 shadow-inner border border-blue-200' 
+              className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg border min-w-[60px] max-w-[80px] ${
+                musicWindowState.isFocused
+                  ? 'bg-blue-100 text-blue-700 border-blue-400'
                   : musicWindowState.isOpen
-                  ? 'bg-gray-100 text-gray-700 border border-gray-300'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-gray-100 text-gray-700 border-gray-300'
+                  : 'text-gray-600 border-transparent'
               }`}
               title="Toggle Music Player"
             >
-              <div className="w-5 h-5 mb-1">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 18V5l12-2v13" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="6" cy="18" r="3" stroke="currentColor" strokeWidth="2" fill="none"/>
-                  <circle cx="18" cy="16" r="3" stroke="currentColor" strokeWidth="2" fill="none"/>
+              <div className="w-5 h-5 mb-1 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M210.3,56.34l-80-24A8,8,0,0,0,120,40V148.26A36,36,0,1,0,136,184V50.75l69.7,20.91A8,8,0,0,0,210.3,56.34ZM104,200a20,20,0,1,1,20-20A20,20,0,0,1,104,200Z"/>
                 </svg>
               </div>
-              <span className="text-xs font-medium truncate">Music</span>
+              <span className="text-xs font-medium leading-tight">Music</span>
             </button>
-            <TaskbarButton to="/gallery" icon="gallery" label={t('nav.gallery')} />
+            
+            {/* Gallery Window Button */}
+            <button
+              onClick={onToggleGalleryWindow}
+              className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg border min-w-[60px] max-w-[80px] ${
+                galleryWindowState.isFocused
+                  ? 'bg-blue-100 text-blue-700 border-blue-400'
+                  : galleryWindowState.isOpen
+                  ? 'bg-gray-100 text-gray-700 border-gray-300'
+                  : 'text-gray-600 border-transparent'
+              }`}
+              title="Toggle Gallery Window"
+            >
+              <div className="w-5 h-5 mb-1 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216v62.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,109.37ZM216,200H40V129.37l40.68-40.68,55.32,55.32a8,8,0,0,0,11.32,0L168,123.31,216,171.31V200ZM144,96a16,16,0,1,1,16,16A16,16,0,0,1,144,96Z"/>
+                </svg>
+              </div>
+              <span className="text-xs font-medium leading-tight">Gallery</span>
+            </button>
             
             {/* Blog Window Button */}
             <button
               onClick={onToggleBlogWindow}
-              className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-100 active:bg-gray-200 min-w-[60px] max-w-[80px] ${
-                blogWindowState.isFocused 
-                  ? 'bg-blue-100 text-blue-600 shadow-inner border border-blue-200' 
+              className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg border min-w-[60px] max-w-[80px] ${
+                blogWindowState.isFocused
+                  ? 'bg-blue-100 text-blue-700 border-blue-400'
                   : blogWindowState.isOpen
-                  ? 'bg-gray-100 text-gray-700 border border-gray-300'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-gray-100 text-gray-700 border-gray-300'
+                  : 'text-gray-600 border-transparent'
               }`}
               title="Toggle Blog Window"
             >
-              <div className="w-5 h-5 mb-1">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 2C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V4C20 2.89543 19.1046 2 18 2H6Z" stroke="currentColor" strokeWidth="2" fill="none"/>
-                  <path d="M8 6H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M8 10H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M8 14H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <div className="w-5 h-5 mb-1 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216V176H40ZM64,88a8,8,0,0,1,8-8H184a8,8,0,0,1,0,16H72A8,8,0,0,1,64,88Zm0,32a8,8,0,0,1,8-8H184a8,8,0,0,1,0,16H72A8,8,0,0,1,64,120Zm0,32a8,8,0,0,1,8-8h80a8,8,0,0,1,0,16H72A8,8,0,0,1,64,152Z"/>
                 </svg>
               </div>
-              <span className="text-xs font-medium truncate">Blog</span>
-            </button>
-            
-            {/* Test Window Button */}
-            <button
-              onClick={onToggleTestWindow}
-              className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-all duration-200 hover:bg-gray-100 active:bg-gray-200 min-w-[60px] max-w-[80px] ${
-                testWindowState.isFocused 
-                  ? 'bg-blue-100 text-blue-600 shadow-inner border border-blue-200' 
-                  : testWindowState.isOpen
-                  ? 'bg-gray-100 text-gray-700 border border-gray-300'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-              title="Toggle Test Window"
-            >
-              <div className="w-5 h-5 mb-1">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" fill="none"/>
-                </svg>
-              </div>
-              <span className="text-xs font-medium truncate">Test</span>
+              <span className="text-xs font-medium leading-tight">Blog</span>
             </button>
           </div>
           
