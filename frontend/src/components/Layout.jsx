@@ -1,19 +1,53 @@
 // frontend/src/components/Layout.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from './NavBar';
 import BlogWindow from './Window/BlogWindow';
 import MusicWindow from './Window/MusicWindow';
 import GalleryWindow from './Window/GalleryWindow';
+import InfoWindow from './Window/InfoWindow';
 
 function Layout() {
   const [showBlogWindow, setShowBlogWindow] = useState(false);
   const [showMusicWindow, setShowMusicWindow] = useState(false);
   const [showGalleryWindow, setShowGalleryWindow] = useState(false);
+  const [showInfoWindow, setShowInfoWindow] = useState(false);
   const [blogWindowMinimized, setBlogWindowMinimized] = useState(false);
   const [musicWindowMinimized, setMusicWindowMinimized] = useState(false);
   const [galleryWindowMinimized, setGalleryWindowMinimized] = useState(false);
+  const [infoWindowMinimized, setInfoWindowMinimized] = useState(false);
   const [focusedWindow, setFocusedWindow] = useState(null);
+
+  // Global right-click and selection prevention
+  useEffect(() => {
+    // Disable right-click context menu globally
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      return false;
+    };
+
+    // Disable text selection with mouse events
+    const handleSelectStart = (e) => {
+      e.preventDefault();
+      return false;
+    };
+
+    // Disable drag start on images and other elements
+    const handleDragStart = (e) => {
+      e.preventDefault();
+      return false;
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('selectstart', handleSelectStart);
+    document.addEventListener('dragstart', handleDragStart);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('selectstart', handleSelectStart);
+      document.removeEventListener('dragstart', handleDragStart);
+    };
+  }, []);
 
   const toggleBlogWindow = () => {
     if (!showBlogWindow) {
@@ -21,13 +55,16 @@ function Layout() {
       setShowBlogWindow(true);
       setBlogWindowMinimized(false);
       setFocusedWindow('blog');
-    } else if (!blogWindowMinimized) {
-      // If window is visible, minimize it
+    } else if (blogWindowMinimized) {
+      // If window is minimized, restore and focus it
+      setBlogWindowMinimized(false);
+      setFocusedWindow('blog');
+    } else if (focusedWindow === 'blog') {
+      // If window is focused, minimize it
       setBlogWindowMinimized(true);
       setFocusedWindow(null);
     } else {
-      // If window is minimized, restore it
-      setBlogWindowMinimized(false);
+      // If window is open but not focused, focus it
       setFocusedWindow('blog');
     }
   };
@@ -35,7 +72,7 @@ function Layout() {
   // Helper function to find and focus the topmost open window after an action
   const focusTopWindow = (excludeWindow = null) => {
     // Define priority order for windows (can be customized)
-    const windowPriority = ['blog', 'music', 'gallery'];
+    const windowPriority = ['blog', 'music', 'gallery', 'info'];
     
     // Find the highest priority open and visible window (excluding the specified window)
     for (const windowId of windowPriority) {
@@ -51,6 +88,10 @@ function Layout() {
       }
       if (windowId === 'gallery' && showGalleryWindow && !galleryWindowMinimized) {
         setFocusedWindow('gallery');
+        return;
+      }
+      if (windowId === 'info' && showInfoWindow && !infoWindowMinimized) {
+        setFocusedWindow('info');
         return;
       }
     }
@@ -70,8 +111,12 @@ function Layout() {
   const closeBlogWindow = () => {
     setShowBlogWindow(false);
     setBlogWindowMinimized(false);
-    // Always refocus to the next highest priority window (excluding blog)
-    focusTopWindow('blog');
+    // Clear focus if the closed window was focused, then find next window
+    if (focusedWindow === 'blog') {
+      setFocusedWindow(null);
+      // Use setTimeout to ensure state updates are applied before focusing next window
+      setTimeout(() => focusTopWindow('blog'), 0);
+    }
   };
 
   const toggleMusicWindow = () => {
@@ -80,13 +125,16 @@ function Layout() {
       setShowMusicWindow(true);
       setMusicWindowMinimized(false);
       setFocusedWindow('music');
-    } else if (!musicWindowMinimized) {
-      // If window is visible, minimize it
+    } else if (musicWindowMinimized) {
+      // If window is minimized, restore and focus it
+      setMusicWindowMinimized(false);
+      setFocusedWindow('music');
+    } else if (focusedWindow === 'music') {
+      // If window is focused, minimize it
       setMusicWindowMinimized(true);
       setFocusedWindow(null);
     } else {
-      // If window is minimized, restore it
-      setMusicWindowMinimized(false);
+      // If window is open but not focused, focus it
       setFocusedWindow('music');
     }
   };
@@ -94,8 +142,12 @@ function Layout() {
   const closeMusicWindow = () => {
     setShowMusicWindow(false);
     setMusicWindowMinimized(false);
-    // Always refocus to the next highest priority window (excluding music)
-    focusTopWindow('music');
+    // Clear focus if the closed window was focused, then find next window
+    if (focusedWindow === 'music') {
+      setFocusedWindow(null);
+      // Use setTimeout to ensure state updates are applied before focusing next window
+      setTimeout(() => focusTopWindow('music'), 0);
+    }
   };
 
   const toggleGalleryWindow = () => {
@@ -104,13 +156,16 @@ function Layout() {
       setShowGalleryWindow(true);
       setGalleryWindowMinimized(false);
       setFocusedWindow('gallery');
-    } else if (!galleryWindowMinimized) {
-      // If window is visible, minimize it
+    } else if (galleryWindowMinimized) {
+      // If window is minimized, restore and focus it
+      setGalleryWindowMinimized(false);
+      setFocusedWindow('gallery');
+    } else if (focusedWindow === 'gallery') {
+      // If window is focused, minimize it
       setGalleryWindowMinimized(true);
       setFocusedWindow(null);
     } else {
-      // If window is minimized, restore it
-      setGalleryWindowMinimized(false);
+      // If window is open but not focused, focus it
       setFocusedWindow('gallery');
     }
   };
@@ -118,8 +173,43 @@ function Layout() {
   const closeGalleryWindow = () => {
     setShowGalleryWindow(false);
     setGalleryWindowMinimized(false);
-    // Always refocus to the next highest priority window (excluding gallery)
-    focusTopWindow('gallery');
+    // Clear focus if the closed window was focused, then find next window
+    if (focusedWindow === 'gallery') {
+      setFocusedWindow(null);
+      // Use setTimeout to ensure state updates are applied before focusing next window
+      setTimeout(() => focusTopWindow('gallery'), 0);
+    }
+  };
+
+  const toggleInfoWindow = () => {
+    if (!showInfoWindow) {
+      // Open the window
+      setShowInfoWindow(true);
+      setInfoWindowMinimized(false);
+      setFocusedWindow('info');
+    } else if (infoWindowMinimized) {
+      // If window is minimized, restore and focus it
+      setInfoWindowMinimized(false);
+      setFocusedWindow('info');
+    } else if (focusedWindow === 'info') {
+      // If window is focused, minimize it
+      setInfoWindowMinimized(true);
+      setFocusedWindow(null);
+    } else {
+      // If window is open but not focused, focus it
+      setFocusedWindow('info');
+    }
+  };
+
+  const closeInfoWindow = () => {
+    setShowInfoWindow(false);
+    setInfoWindowMinimized(false);
+    // Clear focus if the closed window was focused, then find next window
+    if (focusedWindow === 'info') {
+      setFocusedWindow(null);
+      // Use setTimeout to ensure state updates are applied before focusing next window
+      setTimeout(() => focusTopWindow('info'), 0);
+    }
   };
 
   // Simple focus function
@@ -147,17 +237,34 @@ function Layout() {
         isMinimized: galleryWindowMinimized,
         isFocused: focusedWindow === 'gallery'
       };
+    } else if (windowId === 'info') {
+      return {
+        isOpen: showInfoWindow,
+        isMinimized: infoWindowMinimized,
+        isFocused: focusedWindow === 'info'
+      };
     }
     return { isOpen: false, isMinimized: false, isFocused: false };
   };
 
   return (
-    // Desktop interface with taskbar
-    <div className="min-h-screen h-screen flex flex-col relative bg-white">
+    // Desktop interface with taskbar - disable context menu and text selection
+    <div 
+      className="min-h-screen h-screen flex flex-col relative bg-white select-none"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       {/* Desktop Area */}
       <main className="flex-1 relative overflow-hidden">
         <Outlet />
       </main>
+      
+      {/* Windows Activation Watermark */}
+      <div className="absolute bottom-24 right-6 pointer-events-none select-none z-50">
+        <div className="text-lg text-white/50 font-light leading-tight px-4 py-2 text-left">
+          Made with ❤️ by kunnic<br />
+          <span className="text-sm text-white/50">Go to Info for more details (´▽`ʃ♡ƪ)</span>
+        </div>
+      </div>
       
       {/* Taskbar */}
       <div className="absolute bottom-0 left-0 right-0">
@@ -165,6 +272,7 @@ function Layout() {
           onToggleBlogWindow={toggleBlogWindow}
           onToggleMusicWindow={toggleMusicWindow}
           onToggleGalleryWindow={toggleGalleryWindow}
+          onToggleInfoWindow={toggleInfoWindow}
           getWindowState={getWindowState}
         />
       </div>
@@ -177,7 +285,9 @@ function Layout() {
           onMinimize={() => {
             setBlogWindowMinimized(true);
             if (focusedWindow === 'blog') {
-              focusTopWindow('blog');
+              setFocusedWindow(null);
+              // Use setTimeout to ensure state updates are applied before focusing next window
+              setTimeout(() => focusTopWindow('blog'), 0);
             }
           }}
           zIndex={getWindowZIndex('blog')}
@@ -191,7 +301,9 @@ function Layout() {
           onMinimize={() => {
             setMusicWindowMinimized(true);
             if (focusedWindow === 'music') {
-              focusTopWindow('music');
+              setFocusedWindow(null);
+              // Use setTimeout to ensure state updates are applied before focusing next window
+              setTimeout(() => focusTopWindow('music'), 0);
             }
           }}
           zIndex={getWindowZIndex('music')}
@@ -205,11 +317,29 @@ function Layout() {
           onMinimize={() => {
             setGalleryWindowMinimized(true);
             if (focusedWindow === 'gallery') {
-              focusTopWindow('gallery');
+              setFocusedWindow(null);
+              // Use setTimeout to ensure state updates are applied before focusing next window
+              setTimeout(() => focusTopWindow('gallery'), 0);
             }
           }}
           zIndex={getWindowZIndex('gallery')}
           isMinimized={galleryWindowMinimized}
+        />
+      )}
+      {showInfoWindow && (
+        <InfoWindow 
+          onClose={closeInfoWindow}
+          onFocus={() => focusWindow('info')}
+          onMinimize={() => {
+            setInfoWindowMinimized(true);
+            if (focusedWindow === 'info') {
+              setFocusedWindow(null);
+              // Use setTimeout to ensure state updates are applied before focusing next window
+              setTimeout(() => focusTopWindow('info'), 0);
+            }
+          }}
+          zIndex={getWindowZIndex('info')}
+          isMinimized={infoWindowMinimized}
         />
       )}
     </div>

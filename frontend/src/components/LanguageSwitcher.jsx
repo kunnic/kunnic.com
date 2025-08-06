@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../i18n';
 import { languages } from '../i18n/config';
+import translateIcon from '../assets/icons/phosphor-icons/SVGs/regular/translate.svg';
 
 function LanguageSwitcher() {
   const { currentLanguage, changeLanguage } = useLanguage();
@@ -12,23 +13,31 @@ function LanguageSwitcher() {
     setIsOpen(false);
   };
 
+  // Convert language codes to 3-character football-style codes
+  const getLanguageCode = (langCode) => {
+    const codes = {
+      'en': 'ENG',
+      'vi': 'VIE', 
+      'zh-cn': 'CHN'
+    };
+    return codes[langCode] || langCode.toUpperCase().slice(0, 3);
+  };
+
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-        title="Change Language"
+        className="flex flex-col items-center justify-center px-3 py-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors duration-200 min-w-[60px]"
+        title={`Change Language (Current: ${languages[currentLanguage]?.name || currentLanguage.toUpperCase()})`}
       >
-        <span>{languages[currentLanguage]?.flag}</span>
-        <span className="hidden sm:inline">{currentLanguage.toUpperCase()}</span>
-        <svg 
-          className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        {/* Phosphor Translate Icon */}
+        <div className="w-4 h-4 mb-1 flex items-center justify-center">
+          <img src={translateIcon} alt="Translate" className="w-4 h-4" />
+        </div>
+        {/* Active Language Display below icon */}
+        <span className="text-xs font-medium text-center leading-tight">
+          {getLanguageCode(currentLanguage)}
+        </span>
       </button>
 
       {isOpen && (
@@ -40,7 +49,7 @@ function LanguageSwitcher() {
           />
           
           {/* Dropdown */}
-          <div className="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px]">
+          <div className="absolute bottom-full right-0 mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[160px]">
             {Object.entries(languages).map(([code, lang]) => (
               <button
                 key={code}

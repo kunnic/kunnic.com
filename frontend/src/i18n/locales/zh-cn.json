@@ -1,0 +1,39 @@
+{
+  "nav": {
+    "blog": "博客",
+    "music": "音乐", 
+    "gallery": "相册",
+    "start": "kunnic"
+  },
+  "pages": {
+    "blog": {
+      "title": "博客",
+      "loading": "加载中...",
+      "error": "加载文章时出错。",
+      "readMore": "阅读更多",
+      "backToList": "返回列表"
+    },
+    "music": {
+      "title": "音乐",
+      "loading": "加载音乐中...",
+      "error": "无法加载音乐列表。",
+      "play": "播放",
+      "pause": "暂停",
+      "nowPlaying": "正在播放"
+    },
+    "gallery": {
+      "title": "相册", 
+      "loading": "加载图片中...",
+      "error": "无法加载相册。"
+    }
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "发生错误",
+    "retry": "重试",
+    "close": "关闭"
+  },
+  "time": {
+    "format": "h:mm A"
+  }
+}
