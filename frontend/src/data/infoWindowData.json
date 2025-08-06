@@ -1,0 +1,123 @@
+{
+  "title": "kunnic.com",
+  "subtitle": "Personal Website",
+  "sections": [
+    {
+      "id": "about",
+      "title": "About Me",
+      "icon": "user",
+      "iconColor": "text-blue-600",
+      "content": {
+        "greeting": "Hello! I'm Duc Huy NGUYEN, also known as Kunnic.",
+        "description": "As a final-year Computer Science student with a special interest in the world of video games and music, I, Kunnic, created this website for both myself and for those I love."
+      }
+    },
+    {
+      "id": "os",
+      "title": "OS Edition",
+      "icon": "windows",
+      "iconColor": "text-blue-600",
+      "content": {
+        "edition": "kunnic OS - 2025 Creative Edition build 1.0.0",
+        "copyright": "Copyright © 2004 The Kunnic Corporation. All rights reserved."
+      }
+    },
+    {
+      "id": "system",
+      "title": "System Information",
+      "icon": "computer",
+      "iconColor": "text-green-600",
+      "content": {
+        "cpu": {
+          "name": "kunnic's Voyager Gen I",
+          "specs": [
+            { "name": "Creative", "speed": "3.14GHz", "color": "blue" },
+            { "name": "Analysis", "speed": "10.17GHz", "color": "green" },
+            { "name": "Discipline", "speed": "2.71GHz", "color": "orange" },
+            { "name": "Thinking", "speed": "10.28GHz", "color": "purple" }
+          ]
+        },
+        "memory": {
+          "total": "32GB Creative RAM",
+          "breakdown": [
+            { "name": "Gaming", "size": "16GB", "color": "blue" },
+            { "name": "Composing", "size": "8GB", "color": "green" },
+            { "name": "Youtube Shorts", "size": "2GB", "color": "red" },
+            { "name": "Coding", "size": "2GB", "color": "orange" },
+            { "name": "for Zou JiaJia ❤️", "size": "1.5GB", "color": "pink" },
+            { "name": "Philosophy", "size": "0.5GB", "color": "gray" }
+          ]
+        },
+        "cache": [
+          { "level": "L1", "name": "Ultra-Fast Gaming Respond Cache", "color": "red" },
+          { "level": "L2", "name": "Medium Music Theory Processing Cache", "color": "yellow" },
+          { "level": "L3", "name": "Deep Philosophy Buffer", "color": "gray" }
+        ],
+        "apu": {
+          "name": "Integrated Hi-Fi Audio Processor for Classical Music",
+          "color": "indigo"
+        },
+        "storage": [
+          { "name": "1TB Passion SSD", "color": "green" },
+          { "name": "∞ Dream Cloud", "color": "purple" }
+        ],
+        "architecture": {
+          "type": "64-bit Dreamer-based OS",
+          "version": "kunnicOS v2025.1 (Creative Edition)"
+        }
+      }
+    },
+    {
+      "id": "computer-info",
+      "title": "Computer Name, Domain, and Workgroup Settings",
+      "icon": "network",
+      "iconColor": "text-indigo-600",
+      "content": {
+        "computerName": "KUNNIC",
+        "fullComputerName": "kunnic.social.network",
+        "description": "A work in progress. Handle with care.",
+        "workgroup": "KUNNIC_OUTPOST_DISCORD"
+      }
+    },
+    {
+      "id": "activation",
+      "title": "Activation",
+      "icon": "shield",
+      "iconColor": "text-green-600",
+      "content": {
+        "status": "Fully activated by Passion and Curiosity.",
+        "isActivated": true
+      }
+    },
+    {
+      "id": "contact",
+      "title": "Get in Touch",
+      "icon": "contact",
+      "iconColor": "text-blue-600",
+      "content": {
+        "description": "Feel free to reach out for collaborations, questions, or just to say hi!",
+        "links": [
+          {
+            "type": "email",
+            "label": "Email Me",
+            "url": "mailto:your-email@example.com",
+            "color": "bg-blue-500 hover:bg-blue-600"
+          },
+          {
+            "type": "linkedin",
+            "label": "LinkedIn",
+            "url": "https://www.linkedin.com/in/your-profile",
+            "color": "bg-blue-600 hover:bg-blue-700"
+          },
+          {
+            "type": "github",
+            "label": "GitHub",
+            "url": "https://github.com/your-profile",
+            "color": "bg-gray-800 hover:bg-gray-900"
+          }
+        ],
+        "footer": "Made with ❤️ using React & Django"
+      }
+    }
+  ]
+}
