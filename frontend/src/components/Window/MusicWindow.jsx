@@ -1,5 +1,5 @@
 // src/components/Window/MusicWindow.jsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import interact from 'interactjs';
 import axiosClient from '../../api/axiosClient';
 
@@ -29,6 +29,9 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.5);
+  const [previousVolume, setPreviousVolume] = useState(0.5); // Store previous volume for unmute
+  const [isMuted, setIsMuted] = useState(false); // Track mute state separately
+  const [isDraggingVolume, setIsDraggingVolume] = useState(false); // Track volume drag state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -89,12 +92,12 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
     };
   }, [currentSong, songs]);
 
-  // Update audio volume
+  // Update audio volume - use actual volume or 0 if muted - apply immediately
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.volume = volume;
+      audioRef.current.volume = isMuted ? 0 : volume;
     }
-  }, [volume]);
+  }, [volume, isMuted]);
 
   // Auto-play when a new song is selected
   useEffect(() => {
@@ -174,17 +177,201 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
     setCurrentTime(newTime);
   };
 
-  const handleVolumeChange = (event) => {
+  const handleVolumeChange = useCallback((event) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const percent = (event.clientX - rect.left) / rect.width;
-    setVolume(Math.max(0, Math.min(1, percent)));
+    const newVolume = Math.max(0, Math.min(1, percent));
+    
+    // If user is adjusting volume, unmute automatically
+    if (isMuted && newVolume > 0) {
+      setIsMuted(false);
+    }
+    
+    // Store previous volume if we're setting a valid volume
+    if (newVolume > 0) {
+      setPreviousVolume(newVolume);
+    }
+    
+    setVolume(newVolume);
+    
+    // Apply volume immediately to audio element
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume;
+    }
+  }, [isMuted]);
+
+  const handleVolumeMouseDown = (event) => {
+    setIsDraggingVolume(true);
+    handleVolumeChange(event);
   };
+
+  const handleVolumeMouseMove = (event) => {
+    if (isDraggingVolume) {
+      const volumeSlider = event.currentTarget.closest('.volume-slider');
+      if (volumeSlider) {
+        const rect = volumeSlider.getBoundingClientRect();
+        const percent = (event.clientX - rect.left) / rect.width;
+        const newVolume = Math.max(0, Math.min(1, percent));
+        
+        // If user is adjusting volume, unmute automatically
+        if (isMuted && newVolume > 0) {
+          setIsMuted(false);
+        }
+        
+        // Store previous volume if we're setting a valid volume
+        if (newVolume > 0) {
+          setPreviousVolume(newVolume);
+        }
+        
+        setVolume(newVolume);
+        
+        // Apply volume immediately to audio element
+        if (audioRef.current) {
+          audioRef.current.volume = newVolume;
+        }
+      }
+    }
+  };
+
+  const handleVolumeMouseUp = () => {
+    setIsDraggingVolume(false);
+  };
+
+  // Add global mouse event listeners for volume dragging
+  useEffect(() => {
+    if (isDraggingVolume) {
+      const handleGlobalMouseMove = (event) => {
+        const volumeSlider = document.querySelector('.volume-slider');
+        if (volumeSlider) {
+          const rect = volumeSlider.getBoundingClientRect();
+          const percent = (event.clientX - rect.left) / rect.width;
+          const newVolume = Math.max(0, Math.min(1, percent));
+          
+          // If user is adjusting volume, unmute automatically
+          if (isMuted && newVolume > 0) {
+            setIsMuted(false);
+          }
+          
+          // Store previous volume if we're setting a valid volume
+          if (newVolume > 0) {
+            setPreviousVolume(newVolume);
+          }
+          
+          setVolume(newVolume);
+          
+          // Apply volume immediately to audio element
+          if (audioRef.current) {
+            audioRef.current.volume = newVolume;
+          }
+        }
+      };
+
+      const handleGlobalMouseUp = () => {
+        setIsDraggingVolume(false);
+      };
+
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+
+      return () => {
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+      };
+    }
+  }, [isDraggingVolume, isMuted]);
+
+  const handleMuteToggle = useCallback(() => {
+    if (isMuted) {
+      // Unmute: restore previous volume
+      setIsMuted(false);
+      // Apply volume immediately to audio element
+      if (audioRef.current) {
+        audioRef.current.volume = volume;
+      }
+    } else {
+      // Mute: store current volume and mute
+      if (volume > 0) {
+        setPreviousVolume(volume);
+      }
+      setIsMuted(true);
+      // Apply mute immediately to audio element
+      if (audioRef.current) {
+        audioRef.current.volume = 0;
+      }
+    }
+  }, [isMuted, volume]);
 
   const formatTime = (time) => {
     if (isNaN(time)) return '0:00';
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Function to get the appropriate speaker icon based on volume level and mute state
+  const getSpeakerIcon = (volumeLevel, muted) => {
+    if (muted) {
+      // Muted - speaker with X
+      return (
+        <button 
+          onClick={handleMuteToggle}
+          className="p-1 hover:bg-gray-800 rounded transition-colors"
+          title="Unmute"
+        >
+          <svg className="w-4 h-4 text-gray-400 hover:text-white transition-colors" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+            <path d="M80,168H32a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H80l72-56V224Z"/>
+            <line x1="240" y1="104" x2="192" y2="152"/>
+            <line x1="240" y1="152" x2="192" y2="104"/>
+            <line x1="80" y1="88" x2="80" y2="168"/>
+          </svg>
+        </button>
+      );
+    } else if (volumeLevel <= 0.33) {
+      // Low volume - speaker only
+      return (
+        <button 
+          onClick={handleMuteToggle}
+          className="p-1 hover:bg-gray-800 rounded transition-colors"
+          title="Mute"
+        >
+          <svg className="w-4 h-4 text-gray-400 hover:text-white transition-colors" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+            <path d="M80,168H32a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H80l72-56V224Z"/>
+            <line x1="80" y1="88" x2="80" y2="168"/>
+          </svg>
+        </button>
+      );
+    } else if (volumeLevel <= 0.66) {
+      // Medium volume - speaker with one wave
+      return (
+        <button 
+          onClick={handleMuteToggle}
+          className="p-1 hover:bg-gray-800 rounded transition-colors"
+          title="Mute"
+        >
+          <svg className="w-4 h-4 text-gray-400 hover:text-white transition-colors" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+            <path d="M80,168H32a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H80l72-56V224Z"/>
+            <line x1="80" y1="88" x2="80" y2="168"/>
+            <path d="M192,106.85a32,32,0,0,1,0,42.3"/>
+          </svg>
+        </button>
+      );
+    } else {
+      // High volume - speaker with two waves
+      return (
+        <button 
+          onClick={handleMuteToggle}
+          className="p-1 hover:bg-gray-800 rounded transition-colors"
+          title="Mute"
+        >
+          <svg className="w-4 h-4 text-gray-400 hover:text-white transition-colors" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+            <path d="M80,168H32a8,8,0,0,1-8-8V96a8,8,0,0,1,8-8H80l72-56V224Z"/>
+            <line x1="80" y1="88" x2="80" y2="168"/>
+            <path d="M192,106.85a32,32,0,0,1,0,42.3"/>
+            <path d="M221.67,80a72,72,0,0,1,0,96"/>
+          </svg>
+        </button>
+      );
+    }
   };
 
   useEffect(() => {
@@ -200,8 +387,8 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
     // Make the window draggable
     interact(windowElement)
       .draggable({
-        // Enable dragging from the title bar only
-        allowFrom: '.window-title-bar',
+        // Enable dragging from the title bar only - use ID-specific selector
+        allowFrom: '#music-window .window-title-bar',
         // Prevent dragging when interacting with window controls
         ignoreFrom: 'button',
         listeners: {
@@ -256,12 +443,12 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
         }
       })
       .resizable({
-        // Resize from specific edges and corners only
+        // Resize from specific edges and corners only - use ID-specific selectors
         edges: {
-          left: '.resize-left',
-          right: '.resize-right', 
-          bottom: '.resize-bottom',
-          top: '.resize-top'
+          left: '#music-window .resize-left',
+          right: '#music-window .resize-right', 
+          bottom: '#music-window .resize-bottom',
+          top: '#music-window .resize-top'
         },
         listeners: {
           start(event) {
@@ -366,7 +553,7 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
     } else {
       // Re-enable both dragging and resizing when not maximized
       interactInstance.draggable({
-        allowFrom: '.window-title-bar',
+        allowFrom: '#music-window .window-title-bar',
         ignoreFrom: 'button',
         listeners: {
           start(event) {
@@ -415,10 +602,10 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
       // Re-enable resizing when not maximized
       interactInstance.resizable({
         edges: {
-          left: '.resize-left',
-          right: '.resize-right', 
-          bottom: '.resize-bottom',
-          top: '.resize-top'
+          left: '#music-window .resize-left',
+          right: '#music-window .resize-right', 
+          bottom: '#music-window .resize-bottom',
+          top: '#music-window .resize-top'
         },
         listeners: {
           start(event) {
@@ -626,6 +813,7 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
   return (
     <div
       ref={windowRef}
+      id="music-window"
       className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'} ${isMinimized ? 'hidden' : ''}`}
       style={{
         width: `${windowState.width}px`,
@@ -645,8 +833,11 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
       >
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center">
-            <svg className="w-3 h-3" viewBox="0 0 256 256" fill="currentColor">
-              <path d="M212.92,25.69a8,8,0,0,0-6.86-1.45L80.08,50.12a8,8,0,0,0-6.85,6.86L48.11,182a8,8,0,0,0,6.86,9.14l125-25.89a8,8,0,0,0,6.85-6.86l25.12-125A8,8,0,0,0,212.92,25.69ZM180.05,149.31l-113.51,23.5,22.32-107.58,113.5-23.5Z"/>
+            <svg className="w-3 h-3" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+              <circle cx="180" cy="164" r="28"/>
+              <circle cx="52" cy="196" r="28"/>
+              <line x1="208" y1="72" x2="80" y2="104"/>
+              <polyline points="80 196 80 56 208 24 208 164"/>
             </svg>
           </div>
           <span className="text-sm font-medium">Music Player</span>
@@ -716,8 +907,10 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
             <div className="flex items-center justify-center h-full">
               <div className="text-center text-red-600">
                 <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8" viewBox="0 0 256 256" fill="currentColor">
-                    <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm-8-80V80a8,8,0,0,1,16,0v56a8,8,0,0,1-16,0Zm20,36a12,12,0,1,1-12-12A12,12,0,0,1,140,172Z"/>
+                  <svg className="w-8 h-8" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeMiterlimit="10" strokeWidth="16">
+                    <circle cx="128" cy="128" r="96"/>
+                    <line x1="128" y1="136" x2="128" y2="80" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="128" cy="172" r="12" fill="currentColor"/>
                   </svg>
                 </div>
                 <p>{error}</p>
@@ -740,8 +933,11 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
                           className="w-full h-full object-cover rounded-lg"
                         />
                       ) : (
-                        <svg className="w-8 h-8 text-white" viewBox="0 0 256 256" fill="currentColor">
-                          <path d="M212.92,25.69a8,8,0,0,0-6.86-1.45L80.08,50.12a8,8,0,0,0-6.85,6.86L48.11,182a8,8,0,0,0,6.86,9.14l125-25.89a8,8,0,0,0,6.85-6.86l25.12-125A8,8,0,0,0,212.92,25.69Z"/>
+                        <svg className="w-8 h-8 text-white" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+                          <circle cx="180" cy="164" r="28"/>
+                          <circle cx="52" cy="196" r="28"/>
+                          <line x1="208" y1="72" x2="80" y2="104"/>
+                          <polyline points="80 196 80 56 208 24 208 164"/>
                         </svg>
                       )}
                     </div>
@@ -762,8 +958,11 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
                 {songs.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                      <svg className="w-8 h-8" viewBox="0 0 256 256" fill="currentColor">
-                        <path d="M212.92,25.69a8,8,0,0,0-6.86-1.45L80.08,50.12a8,8,0,0,0-6.85,6.86L48.11,182a8,8,0,0,0,6.86,9.14l125-25.89a8,8,0,0,0,6.85-6.86l25.12-125A8,8,0,0,0,212.92,25.69Z"/>
+                      <svg className="w-8 h-8" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+                        <circle cx="180" cy="164" r="28"/>
+                        <circle cx="52" cy="196" r="28"/>
+                        <line x1="208" y1="72" x2="80" y2="104"/>
+                        <polyline points="80 196 80 56 208 24 208 164"/>
                       </svg>
                     </div>
                     <p>No songs in your library</p>
@@ -801,8 +1000,11 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
                               className="w-full h-full object-cover rounded"
                             />
                           ) : (
-                            <svg className="w-5 h-5 text-purple-600" viewBox="0 0 256 256" fill="currentColor">
-                              <path d="M212.92,25.69a8,8,0,0,0-6.86-1.45L80.08,50.12a8,8,0,0,0-6.85,6.86L48.11,182a8,8,0,0,0,6.86,9.14l125-25.89a8,8,0,0,0,6.85-6.86l25.12-125A8,8,0,0,0,212.92,25.69Z"/>
+                            <svg className="w-5 h-5 text-purple-600" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+                              <circle cx="180" cy="164" r="28"/>
+                              <circle cx="52" cy="196" r="28"/>
+                              <line x1="208" y1="72" x2="80" y2="104"/>
+                              <polyline points="80 196 80 56 208 24 208 164"/>
                             </svg>
                           )}
                         </div>
@@ -835,8 +1037,11 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
                     className="w-full h-full object-cover rounded"
                   />
                 ) : (
-                  <svg className="w-5 h-5" viewBox="0 0 256 256" fill="currentColor">
-                    <path d="M212.92,25.69a8,8,0,0,0-6.86-1.45L80.08,50.12a8,8,0,0,0-6.85,6.86L48.11,182a8,8,0,0,0,6.86,9.14l125-25.89a8,8,0,0,0,6.85-6.86l25.12-125A8,8,0,0,0,212.92,25.69Z"/>
+                  <svg className="w-5 h-5" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+                    <circle cx="180" cy="164" r="28"/>
+                    <circle cx="52" cy="196" r="28"/>
+                    <line x1="208" y1="72" x2="80" y2="104"/>
+                    <polyline points="80 196 80 56 208 24 208 164"/>
                   </svg>
                 )}
               </div>
@@ -858,8 +1063,9 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
                 disabled={!currentSong || songs.findIndex(song => song.id === currentSong.id) === 0}
                 title="Previous"
               >
-                <svg className="w-4 h-4" viewBox="0 0 256 256" fill="currentColor">
-                  <path d="M200,32V224a8,8,0,0,1-16,0V47.36L51.87,128,184,208.64a8,8,0,0,0,16,0V32A8,8,0,0,0,200,32Z"/>
+                <svg className="w-4 h-4" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+                  <line x1="56" y1="40" x2="56" y2="216"/>
+                  <path d="M200,47.88V208.12a8,8,0,0,1-12.19,6.65L59.7,134.65a7.83,7.83,0,0,1,0-13.3L187.81,41.23A8,8,0,0,1,200,47.88Z"/>
                 </svg>
               </button>
               <button 
@@ -869,12 +1075,13 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
                 title={isPlaying ? 'Pause' : 'Play'}
               >
                 {isPlaying ? (
-                  <svg className="w-5 h-5" viewBox="0 0 256 256" fill="currentColor">
-                    <path d="M216,48V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V48a16,16,0,0,1,16-16h32A16,16,0,0,1,216,48ZM88,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H88a16,16,0,0,0,16-16V48A16,16,0,0,0,88,32Z"/>
+                  <svg className="w-5 h-5" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+                    <rect x="152" y="40" width="56" height="176" rx="8"/>
+                    <rect x="48" y="40" width="56" height="176" rx="8"/>
                   </svg>
                 ) : (
-                  <svg className="w-5 h-5" viewBox="0 0 256 256" fill="currentColor">
-                    <path d="M240,128a15.74,15.74,0,0,1-7.6,13.51L88.32,229.65a16,16,0,0,1-16.2.3A15.86,15.86,0,0,1,64,216.13V39.87a15.86,15.86,0,0,1,8.12-13.82,16,16,0,0,1,16.2.3L232.4,114.49A15.74,15.74,0,0,1,240,128Z"/>
+                  <svg className="w-5 h-5" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+                    <path d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a7.82,7.82,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z"/>
                   </svg>
                 )}
               </button>
@@ -884,25 +1091,30 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
                 disabled={!currentSong || songs.findIndex(song => song.id === currentSong.id) === songs.length - 1}
                 title="Next"
               >
-                <svg className="w-4 h-4" viewBox="0 0 256 256" fill="currentColor">
-                  <path d="M72,32V224a8,8,0,0,1-16,0V47.36L204.13,128,72,208.64a8,8,0,0,0-16,0V32A8,8,0,0,0,72,32Z"/>
+                <svg className="w-4 h-4" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+                  <line x1="200" y1="40" x2="200" y2="216"/>
+                  <path d="M56,47.88V208.12a8,8,0,0,0,12.19,6.65L196.3,134.65a7.83,7.83,0,0,0,0-13.3L68.19,41.23A8,8,0,0,0,56,47.88Z"/>
                 </svg>
               </button>
             </div>
             
             {/* Volume control */}
             <div className="flex items-center space-x-2 flex-1 min-w-0 justify-end">
-              <svg className="w-4 h-4 text-gray-400" viewBox="0 0 256 256" fill="currentColor">
-                <path d="M199.81,25a16,16,0,0,0-12.9,6.41L148.6,80H88A16,16,0,0,0,72,96v64a16,16,0,0,0,16,16h60.6l38.31,48.59A16,16,0,0,0,212,216V40A16,16,0,0,0,199.81,25Z"/>
-              </svg>
+              {getSpeakerIcon(volume, isMuted)}
               <div 
-                className="w-20 h-1 bg-gray-700 rounded-full cursor-pointer"
-                onClick={handleVolumeChange}
-                title={`Volume: ${Math.round(volume * 100)}%`}
+                className="volume-slider w-20 h-1 bg-gray-700 rounded-full cursor-pointer relative group"
+                onMouseDown={handleVolumeMouseDown}
+                title={isMuted ? `Muted (${Math.round(volume * 100)}%)` : `Volume: ${Math.round(volume * 100)}%`}
               >
                 <div 
-                  className="h-full bg-purple-500 rounded-full transition-all duration-150"
+                  className={`h-full rounded-full ${isMuted ? 'bg-gray-500' : 'bg-purple-500'}`}
                   style={{ width: `${volume * 100}%` }}
+                ></div>
+                {/* Volume handle */}
+                <div 
+                  className={`absolute top-1/2 w-3 h-3 rounded-full transform -translate-y-1/2 cursor-pointer opacity-0 group-hover:opacity-100 ${isMuted ? 'bg-gray-500' : 'bg-purple-500'} ${isDraggingVolume ? 'opacity-100 scale-110' : ''}`}
+                  style={{ left: `calc(${volume * 100}% - 6px)` }}
+                  title={isMuted ? `Muted (${Math.round(volume * 100)}%)` : `${Math.round(volume * 100)}%`}
                 ></div>
               </div>
             </div>

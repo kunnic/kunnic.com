@@ -1,75 +1,26 @@
-// src/components/Window/BlogWindow.jsx
+// src/components/Window/InfoWindow.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import interact from 'interactjs';
-import axiosClient from '../../api/axiosClient';
 import { useLanguage } from '../../i18n';
 
-const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = false }) => {
+const InfoWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = false }) => {
   const { t } = useLanguage();
   const windowRef = useRef(null);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [loadingPost, setLoadingPost] = useState(false);
   const [windowState, setWindowState] = useState({
-    x: 150,
-    y: 80,
-    width: 600,
-    height: 500,
+    x: 200,
+    y: 100,
+    width: 500,
+    height: 400,
     isMaximized: false
   });
 
   // Store original state for restore
   const [originalState, setOriginalState] = useState({
-    x: 150,
-    y: 80,
-    width: 600,
-    height: 500
+    x: 200,
+    y: 100,
+    width: 500,
+    height: 400
   });
-
-  // Fetch blog posts from API
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const response = await axiosClient.get('posts/');
-        setPosts(response.data.results);
-        setError(null);
-      } catch (err) {
-        setError(t('pages.blog.error') || 'Failed to load blog posts');
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchPosts();
-  }, [t]);
-
-  // Function to handle post selection and fetch full post content
-  const handlePostClick = async (post) => {
-    try {
-      setLoadingPost(true);
-      // First set the basic post data immediately
-      setSelectedPost(post);
-      
-      // Then fetch full post details
-      const response = await axiosClient.get(`posts/${post.slug}/`);
-      setSelectedPost(response.data);
-    } catch (err) {
-      console.error('Error fetching post details:', err);
-      // If fetching details fails, still show the basic post data
-      setSelectedPost(post);
-    } finally {
-      setLoadingPost(false);
-    }
-  };
-
-  // Function to go back to blog list
-  const handleBackToBlog = () => {
-    setSelectedPost(null);
-    setLoadingPost(false);
-  };
 
   useEffect(() => {
     const windowElement = windowRef.current;
@@ -85,7 +36,7 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
     interact(windowElement)
       .draggable({
         // Enable dragging from the title bar only - use ID-specific selector
-        allowFrom: '#blog-window .window-title-bar',
+        allowFrom: '#info-window .window-title-bar',
         // Prevent dragging when interacting with window controls
         ignoreFrom: 'button',
         listeners: {
@@ -142,10 +93,10 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
       .resizable({
         // Resize from specific edges and corners only - use ID-specific selectors
         edges: {
-          left: '#blog-window .resize-left',
-          right: '#blog-window .resize-right', 
-          bottom: '#blog-window .resize-bottom',
-          top: '#blog-window .resize-top'
+          left: '#info-window .resize-left',
+          right: '#info-window .resize-right', 
+          bottom: '#info-window .resize-bottom',
+          top: '#info-window .resize-top'
         },
         listeners: {
           start(event) {
@@ -261,6 +212,11 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
     const windowElement = windowRef.current;
     if (!windowElement) return;
 
+    const getTaskbarHeight = () => {
+      const taskbar = document.querySelector('nav');
+      return taskbar ? taskbar.offsetHeight : 52;
+    };
+
     const interactInstance = interact(windowElement);
     if (windowState.isMaximized) {
       // Disable resizing and dragging when maximized
@@ -269,7 +225,7 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
     } else {
       // Re-enable both dragging and resizing when not maximized
       interactInstance.draggable({
-        allowFrom: '#blog-window .window-title-bar',
+        allowFrom: '#info-window .window-title-bar',
         ignoreFrom: 'button',
         listeners: {
           start(event) {
@@ -288,18 +244,16 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
             const rect = target.getBoundingClientRect();
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
-            const taskbarHeight = document.querySelector('nav')?.offsetHeight || 52;
+            const taskbarHeight = getTaskbarHeight();
             const maxAvailableHeight = viewportHeight - taskbarHeight;
             
             const maxX = viewportWidth - rect.width;
             const maxY = maxAvailableHeight - rect.height;
             
-            // Apply boundaries - keep fully on screen
             const boundedX = Math.max(0, Math.min(newX, Math.max(0, maxX)));
             const boundedY = Math.max(0, Math.min(newY, Math.max(0, maxY)));
 
             target.style.transform = `translate(${boundedX}px, ${boundedY}px)`;
-            
             target.setAttribute('data-x', boundedX);
             target.setAttribute('data-y', boundedY);
 
@@ -314,14 +268,13 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
           }
         }
       });
-      
-      // Re-enable resizing when not maximized
+
       interactInstance.resizable({
         edges: {
-          left: '#blog-window .resize-left',
-          right: '#blog-window .resize-right', 
-          bottom: '#blog-window .resize-bottom',
-          top: '#blog-window .resize-top'
+          left: '#info-window .resize-left',
+          right: '#info-window .resize-right', 
+          bottom: '#info-window .resize-bottom',
+          top: '#info-window .resize-top'
         },
         listeners: {
           start(event) {
@@ -331,22 +284,18 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
             const target = event.target;
             let { x, y } = target.dataset;
 
-            // Parse current position
             x = parseFloat(x) || 0;
             y = parseFloat(y) || 0;
 
-            // Get viewport dimensions and taskbar height
             const viewportHeight = window.innerHeight;
-            const taskbarHeight = document.querySelector('nav')?.offsetHeight || 52;
+            const taskbarHeight = getTaskbarHeight();
             const maxAvailableHeight = viewportHeight - taskbarHeight;
 
-            // Calculate new position and size
             let newX = x + event.deltaRect.left;
             let newY = y + event.deltaRect.top;
             let newWidth = event.rect.width;
             let newHeight = event.rect.height;
 
-            // Handle horizontal constraints
             if (newX < 0) {
               newWidth = newWidth + newX;
               newX = 0;
@@ -356,7 +305,6 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
               newWidth = window.innerWidth - newX;
             }
 
-            // Handle vertical constraints
             if (newY < 0) {
               newHeight = newHeight + newY;
               newY = 0;
@@ -366,21 +314,17 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
               newHeight = maxAvailableHeight - newY;
             }
 
-            // Enforce minimum size constraints
             newWidth = Math.max(400, newWidth);
             newHeight = Math.max(300, newHeight);
 
-            // Apply new size and position
             Object.assign(target.style, {
               width: `${newWidth}px`,
               height: `${newHeight}px`,
               transform: `translate(${newX}px, ${newY}px)`
             });
 
-            // Update data attributes
             Object.assign(target.dataset, { x: newX, y: newY });
 
-            // Update React state
             setWindowState(prev => ({
               ...prev,
               x: newX,
@@ -402,75 +346,26 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
     }
   }, [windowState.isMaximized]);
 
-  // Handle window resize separately to avoid dependency issues
+  // Handle window resize when browser is resized
   useEffect(() => {
     let resizeTimeout;
-    
     const handleWindowResize = () => {
-      // Debounce resize events to avoid too many updates
       clearTimeout(resizeTimeout);
       resizeTimeout = setTimeout(() => {
-        const windowElement = windowRef.current;
-        if (!windowElement) return;
-
-        const getTaskbarHeight = () => {
-          const taskbar = document.querySelector('nav');
-          return taskbar ? taskbar.offsetHeight : 52;
-        };
-
-        const taskbarHeight = getTaskbarHeight();
-        const maxAvailableHeight = window.innerHeight - taskbarHeight;
-        
-        // Update interact.js constraints dynamically
-        const interactInstance = interact(windowElement);
-        if (interactInstance.resizable) {
-          interactInstance.resizable({
-            modifiers: [
-              // Only minimum size constraint - let our custom logic handle the rest
-              interact.modifiers.restrictSize({
-                min: { width: 400, height: 300 }
-              })
-            ]
-          });
-        }
-        
-        // Constrain current window position if it's now out of bounds
-        const currentX = parseFloat(windowElement.getAttribute('data-x')) || 0;
-        const currentY = parseFloat(windowElement.getAttribute('data-y')) || 0;
-        const rect = windowElement.getBoundingClientRect();
-        
-        const maxX = window.innerWidth - rect.width;
-        const maxY = maxAvailableHeight - rect.height;
-        
-        const constrainedX = Math.max(0, Math.min(currentX, maxX));
-        const constrainedY = Math.max(0, Math.min(currentY, maxY));
-        
-        if (constrainedX !== currentX || constrainedY !== currentY) {
-          windowElement.style.transform = `translate(${constrainedX}px, ${constrainedY}px)`;
-          windowElement.setAttribute('data-x', constrainedX);
-          windowElement.setAttribute('data-y', constrainedY);
-          
-          setWindowState(prev => ({
-            ...prev,
-            x: constrainedX,
-            y: constrainedY
-          }));
-        }
-
-        // If maximized, adjust to new viewport size
         if (windowState.isMaximized) {
-          const newHeight = maxAvailableHeight;
-          windowElement.style.width = `${window.innerWidth}px`;
-          windowElement.style.height = `${newHeight}px`;
-          windowElement.style.transform = 'translate(0px, 0px)';
+          const taskbar = document.querySelector('nav');
+          const taskbarHeight = taskbar ? taskbar.offsetHeight : 52;
+          const newHeight = window.innerHeight - taskbarHeight;
           
           setWindowState(prev => ({
             ...prev,
+            x: 0,
+            y: 0,
             width: window.innerWidth,
             height: newHeight
           }));
         }
-      }, 100); // Debounce by 100ms
+      }, 100);
     };
 
     window.addEventListener('resize', handleWindowResize);
@@ -547,7 +442,7 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
   return (
     <div
       ref={windowRef}
-      id="blog-window"
+      id="info-window"
       className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'} ${isMinimized ? 'hidden' : ''}`}
       style={{
         width: `${windowState.width}px`,
@@ -562,16 +457,16 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
     >
       {/* Title Bar */}
       <div 
-        className="window-title-bar flex items-center justify-between px-3 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white cursor-move select-none flex-shrink-0"
+        className="window-title-bar flex items-center justify-between px-3 py-2 bg-gradient-to-r from-orange-600 to-orange-700 text-white cursor-move select-none flex-shrink-0"
         onDoubleClick={handleMaximize}
       >
         <div className="flex items-center gap-2">
           <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center">
             <svg className="w-3 h-3" viewBox="0 0 256 256" fill="currentColor">
-              <path d="M208,24H48A16,16,0,0,0,32,40V216a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V40A16,16,0,0,0,208,24ZM96,208H64V184H96Zm0-40H64V144H96Zm0-40H64V104H96Zm0-40H64V64H96Zm96,120H112V64h80Z"/>
+              <path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/>
             </svg>
           </div>
-          <span className="text-sm font-medium">Blog</span>
+          <span className="text-sm font-medium">Portfolio Info</span>
         </div>
         
         {/* Window Controls */}
@@ -613,160 +508,114 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
         </div>
       </div>
 
-      {/* Window Content - with proper flex and overflow handling */}
+      {/* Window Content */}
       <div className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto p-6 selectable-text">
-          {selectedPost ? (
-            // Individual Post View
-            <div className="space-y-6">
-              {/* Back Button */}
-              <div className="flex items-center gap-3 mb-6">
-                <button
-                  onClick={handleBackToBlog}
-                  className="flex items-center gap-2 px-3 py-2 bg-green-100 hover:bg-green-200 text-green-800 rounded-lg transition-colors"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 256 256" fill="currentColor">
-                    <path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/>
-                  </svg>
-                  Back to Blog
-                </button>
-              </div>
-
-              {loadingPost ? (
-                <div className="text-center py-8">
-                  <div className="text-gray-600">Loading post details...</div>
-                </div>
-              ) : (
-                <article className="space-y-6">
-                  {/* Post Header */}
-                  <div className="space-y-4">
-                    <h1 className="text-3xl font-bold text-gray-800">{selectedPost.title}</h1>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>
-                        {new Date(selectedPost.created_at || selectedPost.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
-                      {selectedPost.author && (
-                        <span>
-                          by {typeof selectedPost.author === 'object' ? selectedPost.author.username : selectedPost.author}
-                        </span>
-                      )}
-                    </div>
-                    {selectedPost.tags && (
-                      <div className="flex gap-2 flex-wrap">
-                        {selectedPost.tags.map((tag, index) => (
-                          <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Post Content */}
-                  <div className="prose prose-gray max-w-none">
-                    {selectedPost.content ? (
-                      <div 
-                        className="text-gray-700 leading-relaxed whitespace-pre-wrap"
-                        dangerouslySetInnerHTML={{ __html: selectedPost.content }}
-                      />
-                    ) : (
-                      <div className="text-gray-700 leading-relaxed">
-                        {selectedPost.excerpt || 'No content available for this post.'}
-                      </div>
-                    )}
-                  </div>
-                </article>
-              )}
+          <div className="space-y-6">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">kunnic.com</h1>
+              <p className="text-lg text-gray-600">Personal Portfolio & Creative Space</p>
             </div>
-          ) : (
-            // Blog List View
-            <>
-              {loading && (
-                <div className="text-center py-8">
-                  <div className="text-gray-600">Loading blog posts...</div>
-                </div>
-              )}
-              
-              {error && (
-                <div className="text-center py-8">
-                  <div className="text-red-500">{error}</div>
-                </div>
-              )}
-              
-              {!loading && !error && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-800 mb-2">My Blog</h1>
-                    <p className="text-gray-600">Welcome to my personal blog</p>
-                  </div>
 
-                  {/* Blog Posts from API */}
-                  <div className="space-y-6">
-                    {posts.length === 0 ? (
-                      <div className="text-center py-8">
-                        <div className="text-gray-500">No blog posts found.</div>
-                      </div>
-                    ) : (
-                      posts.map(post => (
-                        <article 
-                          key={post.id} 
-                          className="bg-gray-50 p-6 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 hover:border-gray-300 transition-colors"
-                          onClick={() => handlePostClick(post)}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <h2 className="text-xl font-semibold text-gray-800 hover:text-blue-600 transition-colors">{post.title}</h2>
-                            <span className="text-sm text-gray-500">
-                              {new Date(post.created_at || post.date).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric'
-                              })}
-                            </span>
-                          </div>
-                          <p className="text-gray-600 mb-4">
-                            {post.excerpt || post.content?.substring(0, 200) + '...' || 'No preview available.'}
-                          </p>
-                          {post.tags && (
-                            <div className="flex gap-2 flex-wrap">
-                              {post.tags.map((tag, index) => (
-                                <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </article>
-                      ))
-                    )}
+            <div className="space-y-6">
+              <section className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" className="text-blue-600">
+                    <path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/>
+                  </svg>
+                  About Me
+                </h2>
+                <p className="text-gray-700 leading-relaxed">
+                  Welcome to my personal portfolio! I'm kunnic, and this is my creative digital space where I share my journey, projects, and passions. 
+                  This website serves as a window into my world of development, creativity, and personal expression.
+                </p>
+              </section>
+
+              <section className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" className="text-green-600">
+                    <path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM208,80,128,144,48,80V64l80,64,80-64V80Z"/>
+                  </svg>
+                  Features
+                </h2>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Interactive desktop-style interface
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Personal blog with thoughts and updates
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Music player for my favorite tracks
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Photo gallery showcasing memorable moments
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                    Multi-language support
+                  </li>
+                </ul>
+              </section>
+
+              <section className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                  <svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor" className="text-purple-600">
+                    <path d="M208,32H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM64,88a8,8,0,0,1,8-8H184a8,8,0,0,1,0,16H72A8,8,0,0,1,64,88Zm0,32a8,8,0,0,1,8-8H184a8,8,0,0,1,0,16H72A8,8,0,0,1,64,120Zm0,32a8,8,0,0,1,8-8h80a8,8,0,0,1,0,16H72A8,8,0,0,1,64,152Z"/>
+                  </svg>
+                  Technology Stack
+                </h2>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded">React</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded">Django</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-cyan-100 text-cyan-800 rounded">Tailwind CSS</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded">SQLite</span>
                   </div>
                 </div>
-              )}
-            </>
-          )}
+              </section>
+
+              <section className="bg-gray-50 p-6 rounded-lg border border-gray-200 text-center">
+                <h2 className="text-xl font-semibold text-gray-800 mb-3">Get in Touch</h2>
+                <p className="text-gray-600 mb-4">
+                  Feel free to explore the different sections of my portfolio and get to know more about me!
+                </p>
+                <p className="text-sm text-gray-500">
+                  Made with ❤️ using React & Django
+                </p>
+              </section>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Resize handles - positioned at edges and corners - only show when not maximized */}
       {!windowState.isMaximized && (
         <>
-          <div className="resize-top absolute top-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-green-500 hover:bg-opacity-30 transition-colors"></div>
-          <div className="resize-bottom absolute bottom-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-green-500 hover:bg-opacity-30 transition-colors"></div>
-          <div className="resize-left absolute left-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-green-500 hover:bg-opacity-30 transition-colors"></div>
-          <div className="resize-right absolute right-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-green-500 hover:bg-opacity-30 transition-colors"></div>
+          <div className="resize-top absolute top-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-30 transition-colors"></div>
+          <div className="resize-bottom absolute bottom-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-30 transition-colors"></div>
+          <div className="resize-left absolute left-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-30 transition-colors"></div>
+          <div className="resize-right absolute right-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-30 transition-colors"></div>
           
           {/* Corner resize handles */}
-          <div className="resize-top resize-left absolute top-0 left-0 w-2 h-2 cursor-nw-resize bg-transparent hover:bg-green-500 hover:bg-opacity-50 transition-colors"></div>
-          <div className="resize-top resize-right absolute top-0 right-0 w-2 h-2 cursor-ne-resize bg-transparent hover:bg-green-500 hover:bg-opacity-50 transition-colors"></div>
-          <div className="resize-bottom resize-left absolute bottom-0 left-0 w-2 h-2 cursor-sw-resize bg-transparent hover:bg-green-500 hover:bg-opacity-50 transition-colors"></div>
-          <div className="resize-bottom resize-right absolute bottom-0 right-0 w-2 h-2 cursor-se-resize bg-transparent hover:bg-green-500 hover:bg-opacity-50 transition-colors"></div>
+          <div className="resize-top resize-left absolute top-0 left-0 w-2 h-2 cursor-nw-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors"></div>
+          <div className="resize-top resize-right absolute top-0 right-0 w-2 h-2 cursor-ne-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors"></div>
+          <div className="resize-bottom resize-left absolute bottom-0 left-0 w-2 h-2 cursor-sw-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors"></div>
+          <div className="resize-bottom resize-right absolute bottom-0 right-0 w-2 h-2 cursor-se-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors"></div>
         </>
       )}
     </div>
   );
 };
 
-export default BlogWindow;
+export default InfoWindow;

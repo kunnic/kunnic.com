@@ -70,8 +70,8 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
     // Make the window draggable
     interact(windowElement)
       .draggable({
-        // Enable dragging from the title bar only
-        allowFrom: '.window-title-bar',
+        // Enable dragging from the title bar only - use ID-specific selector
+        allowFrom: '#gallery-window .window-title-bar',
         // Prevent dragging when interacting with window controls
         ignoreFrom: 'button',
         listeners: {
@@ -126,12 +126,12 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
         }
       })
       .resizable({
-        // Resize from specific edges and corners only
+        // Resize from specific edges and corners only - use ID-specific selectors
         edges: {
-          left: '.resize-left',
-          right: '.resize-right', 
-          bottom: '.resize-bottom',
-          top: '.resize-top'
+          left: '#gallery-window .resize-left',
+          right: '#gallery-window .resize-right', 
+          bottom: '#gallery-window .resize-bottom',
+          top: '#gallery-window .resize-top'
         },
         listeners: {
           start(event) {
@@ -236,7 +236,7 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
     } else {
       // Re-enable both dragging and resizing when not maximized
       interactInstance.draggable({
-        allowFrom: '.window-title-bar',
+        allowFrom: '#gallery-window .window-title-bar',
         ignoreFrom: 'button',
         listeners: {
           start(event) {
@@ -285,10 +285,10 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
       // Re-enable resizing when not maximized
       interactInstance.resizable({
         edges: {
-          left: '.resize-left',
-          right: '.resize-right', 
-          bottom: '.resize-bottom',
-          top: '.resize-top'
+          left: '#gallery-window .resize-left',
+          right: '#gallery-window .resize-right', 
+          bottom: '#gallery-window .resize-bottom',
+          top: '#gallery-window .resize-top'
         },
         listeners: {
           start(event) {
@@ -492,6 +492,7 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
     <>
       <div
         ref={windowRef}
+        id="gallery-window"
         className={`absolute bg-white border border-gray-300 overflow-hidden select-none flex flex-col ${windowState.isMaximized ? '' : 'rounded-lg'} ${isMinimized ? 'hidden' : ''}`}
         style={{
           width: `${windowState.width}px`,
