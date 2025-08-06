@@ -1,6 +1,6 @@
 // frontend/src/components/Navbar.jsx
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import LanguageSwitcher from './LanguageSwitcher';
 import Clock from './Clock';
@@ -10,11 +10,63 @@ function Navbar({ onToggleBlogWindow, onToggleMusicWindow, onToggleGalleryWindow
   const { t } = useLanguage();
   const [hoveredButton, setHoveredButton] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [displayText, setDisplayText] = useState('[kunnic]');
   
   const blogWindowState = getWindowState('blog');
   const musicWindowState = getWindowState('music');
   const galleryWindowState = getWindowState('gallery');
   const infoWindowState = getWindowState('info');
+
+  // Word shuffle animation on component mount
+  useEffect(() => {
+    const targetText = '[kunnic]';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()[]{}';
+    let animationFrame;
+    let iteration = 0;
+    let frameCount = 0;
+
+    const animate = () => {
+      // Faster shuffle: update every frame instead of controlling by iteration
+      setDisplayText(prevText => 
+        targetText
+          .split('')
+          .map((letter, index) => {
+            // Left to right animation: reveal from left to right starting with 'k'
+            if (index < iteration) {
+              return targetText[index];
+            }
+            return characters[Math.floor(Math.random() * characters.length)];
+          })
+          .join('')
+      );
+
+      if (iteration >= targetText.length) {
+        setDisplayText(targetText);
+        return;
+      }
+
+      frameCount++;
+      // Much slower iteration progression but faster visual shuffle
+      // Reveal one character every 120 frames (about 2 seconds at 60fps)
+      if (frameCount % 120 === 0) {
+        iteration += 1;
+      }
+      
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    // Start animation after a short delay
+    const timer = setTimeout(() => {
+      animate();
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      if (animationFrame) {
+        cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, []);
 
   const handleMouseEnter = (buttonName, event) => {
     setHoveredButton(buttonName);
@@ -61,10 +113,9 @@ function Navbar({ onToggleBlogWindow, onToggleMusicWindow, onToggleGalleryWindow
           <div className="flex-1">
             <NavLink 
               to="/" 
-              className="flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold text-sm w-fit"
+              className="flex items-center px-4 py-2 text-gray-800 hover:text-gray-600 transition-all duration-200 font-bold text-lg w-fit font-mono"
             >
-              <span className="mr-2">⊞</span>
-              {t('nav.start')}
+              {displayText}
             </NavLink>
           </div>
           

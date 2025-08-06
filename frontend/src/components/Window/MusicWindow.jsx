@@ -32,8 +32,11 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
   const [previousVolume, setPreviousVolume] = useState(0.5); // Store previous volume for unmute
   const [isMuted, setIsMuted] = useState(false); // Track mute state separately
   const [isDraggingVolume, setIsDraggingVolume] = useState(false); // Track volume drag state
+  const [isDraggingProgress, setIsDraggingProgress] = useState(false); // Track progress drag state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const progressBarRef = useRef(null);
 
   // Fetch songs from API
   useEffect(() => {
@@ -59,7 +62,22 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
     if (!audio) return;
 
     const updateTime = () => setCurrentTime(audio.currentTime);
-    const updateDuration = () => setDuration(audio.duration);
+    const updateDuration = () => {
+      const newDuration = audio.duration;
+      if (newDuration && !isNaN(newDuration)) {
+        setDuration(newDuration);
+      }
+    };
+    const handleCanPlay = () => {
+      if (audio.duration && !isNaN(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    };
+    const handleLoadedData = () => {
+      if (audio.duration && !isNaN(audio.duration)) {
+        setDuration(audio.duration);
+      }
+    };
     const handleEnded = () => {
       setIsPlaying(false);
       // Auto-play next song if available
@@ -79,6 +97,8 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', updateDuration);
+    audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('loadeddata', handleLoadedData);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('loadstart', handleLoadStart);
     audio.addEventListener('error', handleError);
@@ -86,6 +106,8 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
     return () => {
       audio.removeEventListener('timeupdate', updateTime);
       audio.removeEventListener('loadedmetadata', updateDuration);
+      audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('loadeddata', handleLoadedData);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('loadstart', handleLoadStart);
       audio.removeEventListener('error', handleError);
@@ -140,7 +162,9 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play().catch(error => {
+      audio.play().then(() => {
+        setIsPlaying(true);
+      }).catch(error => {
         console.error('Error playing audio:', error);
         setIsPlaying(false);
       });
@@ -169,12 +193,109 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
   };
 
   const handleSeek = (event) => {
-    if (!audioRef.current) return;
+    // Prevent all event propagation
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const audio = audioRef.current;
+    if (!audio || !currentSong) return;
+    
+    // Use the duration from state if audio.duration is not available
+    const audioDuration = audio.duration || duration;
+    
+    // Check if audio is loaded enough to seek
+    if (audio.readyState < 1 && !audioDuration) { // HAVE_METADATA
+      return;
+    }
+    
+    if (!audioDuration || audioDuration === 0 || isNaN(audioDuration)) {
+      return;
+    }
+    
     const rect = event.currentTarget.getBoundingClientRect();
-    const percent = (event.clientX - rect.left) / rect.width;
-    const newTime = percent * duration;
-    audioRef.current.currentTime = newTime;
-    setCurrentTime(newTime);
+    const percent = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const newTime = percent * audioDuration;
+    
+    try {
+      audio.currentTime = newTime;
+      setCurrentTime(newTime);
+    } catch (error) {
+      console.error('Error seeking audio:', error);
+    }
+  };
+
+  const handleProgressMouseDown = (event) => {
+    // This function will now handle both clicks and the start of a drag.
+    event.preventDefault();
+    
+    const audio = audioRef.current;
+    const progressBar = progressBarRef.current;
+    if (!audio || !progressBar || !currentSong) return;
+
+    // Use the duration from state if audio.duration is not available
+    const audioDuration = audio.duration || duration;
+    if (!audioDuration || audioDuration === 0 || isNaN(audioDuration)) return;
+
+    // Immediately seek to the clicked position
+    const rect = progressBar.getBoundingClientRect();
+    const percent = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const newTime = percent * audioDuration;
+    
+    try {
+      audio.currentTime = newTime;
+      setCurrentTime(newTime);
+    } catch (error) {
+      console.error('Error seeking audio:', error);
+      return;
+    }
+
+    // Now, prepare for a potential drag
+    setIsDraggingProgress(true);
+
+    const handleMouseMove = (moveEvent) => {
+      const movePercent = Math.max(0, Math.min(1, (moveEvent.clientX - rect.left) / rect.width));
+      const moveNewTime = movePercent * audioDuration;
+      try {
+        audio.currentTime = moveNewTime;
+        setCurrentTime(moveNewTime);
+      } catch (error) {
+        console.error('Error seeking during drag:', error);
+      }
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      setIsDraggingProgress(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleProgressMouseMove = (event) => {
+    if (isDraggingProgress) {
+      const progressBar = event.currentTarget.closest('.progress-bar');
+      if (progressBar) {
+        const audio = audioRef.current;
+        if (!audio || !currentSong || audio.readyState < 2) return;
+        
+        const rect = progressBar.getBoundingClientRect();
+        const percent = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+        const newTime = percent * audio.duration;
+        
+        try {
+          audio.currentTime = newTime;
+          setCurrentTime(newTime);
+        } catch (error) {
+          console.error('Error seeking audio during drag:', error);
+        }
+      }
+    }
+  };
+
+  const handleProgressMouseUp = () => {
+    setIsDraggingProgress(false);
   };
 
   const handleVolumeChange = useCallback((event) => {
@@ -307,6 +428,13 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
+
+  // Cleanup audio context when component unmounts
+  useEffect(() => {
+    return () => {
+      // No cleanup needed anymore since we removed the visualizer
+    };
+  }, []);
 
   // Function to get the appropriate speaker icon based on volume level and mute state
   const getSpeakerIcon = (volumeLevel, muted) => {
@@ -575,6 +703,7 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
             const taskbarHeight = document.querySelector('nav')?.offsetHeight || 52;
             const maxAvailableHeight = viewportHeight - taskbarHeight;
             
+            // Calculate boundaries - keep fully on screen
             const maxX = viewportWidth - rect.width;
             const maxY = maxAvailableHeight - rect.height;
             
@@ -890,6 +1019,7 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
           src={currentSong?.audio_file}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
+          crossOrigin="anonymous"
         />
         
         {/* Main content area - scrollable */}
@@ -982,11 +1112,9 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
                         <div className="flex-shrink-0 w-8 text-sm text-gray-500 text-center">
                           {currentSong?.id === song.id && isPlaying ? (
                             <div className="flex items-center justify-center">
-                              <div className="flex space-x-1">
-                                <div className="w-1 h-4 bg-purple-600 animate-pulse"></div>
-                                <div className="w-1 h-4 bg-purple-600 animate-pulse" style={{animationDelay: '0.1s'}}></div>
-                                <div className="w-1 h-4 bg-purple-600 animate-pulse" style={{animationDelay: '0.2s'}}></div>
-                              </div>
+                              <svg className="w-4 h-4 text-purple-600 animate-pulse" viewBox="0 0 256 256" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16">
+                                <path d="M72,39.88V216.12a8,8,0,0,0,12.15,6.69l144.08-88.12a7.82,7.82,0,0,0,0-13.38L84.15,33.19A8,8,0,0,0,72,39.88Z"/>
+                              </svg>
                             </div>
                           ) : (
                             <span>{index + 1}</span>
@@ -1025,7 +1153,7 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
         </div>
         
         {/* Fixed playbar at bottom - always visible */}
-        <div className="flex-shrink-0 bg-gray-900 text-white p-4 border-t border-gray-700">
+        <div className="flex-shrink-0 bg-gray-900 text-white p-4 border-t border-gray-700" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between">
             {/* Track info */}
             <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -1123,13 +1251,21 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
           {/* Progress bar */}
           <div className="mt-3">
             <div 
-              className="w-full h-1 bg-gray-700 rounded-full cursor-pointer"
-              onClick={handleSeek}
-              title="Seek"
+              ref={progressBarRef}
+              className="progress-bar w-full h-2 bg-gray-700 rounded-full cursor-pointer hover:bg-gray-600 transition-colors relative group"
+              onMouseDown={handleProgressMouseDown}
+              title={`${formatTime(currentTime)} / ${formatTime(duration)}`}
             >
               <div 
-                className="h-full bg-purple-500 rounded-full transition-all duration-150"
+                className="h-full bg-purple-500 rounded-full transition-all duration-150 group-hover:bg-purple-400"
                 style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+              ></div>
+              {/* Progress handle - show when hovering or dragging */}
+              <div 
+                className={`absolute top-1/2 w-3 h-3 bg-purple-500 rounded-full transform -translate-y-1/2 -translate-x-1/2 transition-opacity pointer-events-none ${
+                  isDraggingProgress ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
+                }`}
+                style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
               ></div>
             </div>
             <div className="flex justify-between text-xs text-gray-400 mt-1">
@@ -1143,16 +1279,111 @@ const MusicWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = 
       {/* Resize handles - positioned at edges and corners - only show when not maximized */}
       {!windowState.isMaximized && (
         <>
-          <div className="resize-top absolute top-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-purple-500 hover:bg-opacity-30 transition-colors"></div>
-          <div className="resize-bottom absolute bottom-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-purple-500 hover:bg-opacity-30 transition-colors"></div>
-          <div className="resize-left absolute left-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-purple-500 hover:bg-opacity-30 transition-colors"></div>
-          <div className="resize-right absolute right-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-purple-500 hover:bg-opacity-30 transition-colors"></div>
+          {/* Top and bottom resize bars with fade effect */}
+          <div 
+            className="resize-top absolute top-0 left-6 right-6 h-0.5 cursor-ns-resize bg-transparent hover:bg-purple-600 hover:bg-opacity-40 transition-colors"
+            style={{
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(to right, transparent, rgba(147, 51, 234, 0.4) 20%, rgba(147, 51, 234, 0.4) 80%, transparent)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-bottom absolute bottom-0 left-6 right-6 h-0.5 cursor-ns-resize bg-transparent hover:bg-purple-600 hover:bg-opacity-40 transition-colors"
+            style={{
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(to right, transparent, rgba(147, 51, 234, 0.4) 20%, rgba(147, 51, 234, 0.4) 80%, transparent)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
           
-          {/* Corner resize handles */}
-          <div className="resize-top resize-left absolute top-0 left-0 w-2 h-2 cursor-nw-resize bg-transparent hover:bg-purple-500 hover:bg-opacity-50 transition-colors"></div>
-          <div className="resize-top resize-right absolute top-0 right-0 w-2 h-2 cursor-ne-resize bg-transparent hover:bg-purple-500 hover:bg-opacity-50 transition-colors"></div>
-          <div className="resize-bottom resize-left absolute bottom-0 left-0 w-2 h-2 cursor-sw-resize bg-transparent hover:bg-purple-500 hover:bg-opacity-50 transition-colors"></div>
-          <div className="resize-bottom resize-right absolute bottom-0 right-0 w-2 h-2 cursor-se-resize bg-transparent hover:bg-purple-500 hover:bg-opacity-50 transition-colors"></div>
+          {/* Left and right resize bars with fade effect */}
+          <div 
+            className="resize-left absolute left-0 top-6 bottom-6 w-0.5 cursor-ew-resize bg-transparent hover:bg-purple-600 hover:bg-opacity-40 transition-colors"
+            style={{
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(to bottom, transparent, rgba(147, 51, 234, 0.4) 20%, rgba(147, 51, 234, 0.4) 80%, transparent)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-right absolute right-0 top-6 bottom-6 w-0.5 cursor-ew-resize bg-transparent hover:bg-purple-600 hover:bg-opacity-40 transition-colors"
+            style={{
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(to bottom, transparent, rgba(147, 51, 234, 0.4) 20%, rgba(147, 51, 234, 0.4) 80%, transparent)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          
+          {/* Corner resize handles - quarter circles */}
+          <div 
+            className="resize-top resize-left absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-transparent hover:bg-purple-600 hover:bg-opacity-50 transition-colors"
+            style={{
+              background: 'transparent',
+              borderBottomRightRadius: '100%'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(147, 51, 234, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-top resize-right absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-transparent hover:bg-purple-600 hover:bg-opacity-50 transition-colors"
+            style={{
+              background: 'transparent',
+              borderBottomLeftRadius: '100%'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(147, 51, 234, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-bottom resize-left absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-transparent hover:bg-purple-600 hover:bg-opacity-50 transition-colors"
+            style={{
+              background: 'transparent',
+              borderTopRightRadius: '100%'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(147, 51, 234, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-bottom resize-right absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-transparent hover:bg-purple-600 hover:bg-opacity-50 transition-colors"
+            style={{
+              background: 'transparent',
+              borderTopLeftRadius: '100%'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(147, 51, 234, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
         </>
       )}
     </div>

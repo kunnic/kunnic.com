@@ -17,6 +17,7 @@ function Layout() {
   const [galleryWindowMinimized, setGalleryWindowMinimized] = useState(false);
   const [infoWindowMinimized, setInfoWindowMinimized] = useState(false);
   const [focusedWindow, setFocusedWindow] = useState(null);
+  const [windowStack, setWindowStack] = useState([]); // Stack order for proper layering
 
   // Global right-click and selection prevention
   useEffect(() => {
@@ -54,18 +55,18 @@ function Layout() {
       // Open the window
       setShowBlogWindow(true);
       setBlogWindowMinimized(false);
-      setFocusedWindow('blog');
+      focusWindow('blog');
     } else if (blogWindowMinimized) {
       // If window is minimized, restore and focus it
       setBlogWindowMinimized(false);
-      setFocusedWindow('blog');
+      focusWindow('blog');
     } else if (focusedWindow === 'blog') {
       // If window is focused, minimize it
       setBlogWindowMinimized(true);
       setFocusedWindow(null);
     } else {
       // If window is open but not focused, focus it
-      setFocusedWindow('blog');
+      focusWindow('blog');
     }
   };
 
@@ -100,17 +101,23 @@ function Layout() {
     setFocusedWindow(null);
   };
 
-  // Get window z-index based on focus - focused window gets highest z-index
+  // Get window z-index based on stack position - proper layering
   const getWindowZIndex = (windowId) => {
-    if (focusedWindow === windowId) {
-      return 50; // Highest z-index for focused window
+    const baseZIndex = 40;
+    const stackIndex = windowStack.indexOf(windowId);
+    if (stackIndex === -1) {
+      // Window not in stack yet, add it
+      setWindowStack(prev => [...prev, windowId]);
+      return baseZIndex + windowStack.length;
     }
-    return 40; // Lower z-index for unfocused windows
+    return baseZIndex + stackIndex;
   };
 
   const closeBlogWindow = () => {
     setShowBlogWindow(false);
     setBlogWindowMinimized(false);
+    // Remove from window stack
+    setWindowStack(prev => prev.filter(id => id !== 'blog'));
     // Clear focus if the closed window was focused, then find next window
     if (focusedWindow === 'blog') {
       setFocusedWindow(null);
@@ -124,24 +131,26 @@ function Layout() {
       // Open the window
       setShowMusicWindow(true);
       setMusicWindowMinimized(false);
-      setFocusedWindow('music');
+      focusWindow('music');
     } else if (musicWindowMinimized) {
       // If window is minimized, restore and focus it
       setMusicWindowMinimized(false);
-      setFocusedWindow('music');
+      focusWindow('music');
     } else if (focusedWindow === 'music') {
       // If window is focused, minimize it
       setMusicWindowMinimized(true);
       setFocusedWindow(null);
     } else {
       // If window is open but not focused, focus it
-      setFocusedWindow('music');
+      focusWindow('music');
     }
   };
 
   const closeMusicWindow = () => {
     setShowMusicWindow(false);
     setMusicWindowMinimized(false);
+    // Remove from window stack
+    setWindowStack(prev => prev.filter(id => id !== 'music'));
     // Clear focus if the closed window was focused, then find next window
     if (focusedWindow === 'music') {
       setFocusedWindow(null);
@@ -155,24 +164,26 @@ function Layout() {
       // Open the window
       setShowGalleryWindow(true);
       setGalleryWindowMinimized(false);
-      setFocusedWindow('gallery');
+      focusWindow('gallery');
     } else if (galleryWindowMinimized) {
       // If window is minimized, restore and focus it
       setGalleryWindowMinimized(false);
-      setFocusedWindow('gallery');
+      focusWindow('gallery');
     } else if (focusedWindow === 'gallery') {
       // If window is focused, minimize it
       setGalleryWindowMinimized(true);
       setFocusedWindow(null);
     } else {
       // If window is open but not focused, focus it
-      setFocusedWindow('gallery');
+      focusWindow('gallery');
     }
   };
 
   const closeGalleryWindow = () => {
     setShowGalleryWindow(false);
     setGalleryWindowMinimized(false);
+    // Remove from window stack
+    setWindowStack(prev => prev.filter(id => id !== 'gallery'));
     // Clear focus if the closed window was focused, then find next window
     if (focusedWindow === 'gallery') {
       setFocusedWindow(null);
@@ -186,24 +197,26 @@ function Layout() {
       // Open the window
       setShowInfoWindow(true);
       setInfoWindowMinimized(false);
-      setFocusedWindow('info');
+      focusWindow('info');
     } else if (infoWindowMinimized) {
       // If window is minimized, restore and focus it
       setInfoWindowMinimized(false);
-      setFocusedWindow('info');
+      focusWindow('info');
     } else if (focusedWindow === 'info') {
       // If window is focused, minimize it
       setInfoWindowMinimized(true);
       setFocusedWindow(null);
     } else {
       // If window is open but not focused, focus it
-      setFocusedWindow('info');
+      focusWindow('info');
     }
   };
 
   const closeInfoWindow = () => {
     setShowInfoWindow(false);
     setInfoWindowMinimized(false);
+    // Remove from window stack
+    setWindowStack(prev => prev.filter(id => id !== 'info'));
     // Clear focus if the closed window was focused, then find next window
     if (focusedWindow === 'info') {
       setFocusedWindow(null);
@@ -212,9 +225,15 @@ function Layout() {
     }
   };
 
-  // Simple focus function
+  // Simple focus function with proper stacking
   const focusWindow = (windowId) => {
     setFocusedWindow(windowId);
+    // Update window stack order - move focused window to top
+    setWindowStack(prev => {
+      // Remove the window from its current position and add it to the end (top)
+      const newStack = prev.filter(id => id !== windowId);
+      return [...newStack, windowId];
+    });
   };
 
   // Get window state for taskbar button styling
