@@ -3,7 +3,7 @@ import React from 'react';
 
 function Desktop() {
   return (
-    <div className="absolute inset-0 w-full h-full relative overflow-hidden">
+    <div className="absolute inset-0 w-full h-full overflow-hidden">
       {/* Multi-layer gradient background */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500"></div>
       <div className="absolute inset-0 bg-gradient-to-tl from-cyan-300/30 via-transparent to-indigo-500/20"></div>

@@ -753,16 +753,111 @@ const BlogWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized = f
       {/* Resize handles - positioned at edges and corners - only show when not maximized */}
       {!windowState.isMaximized && (
         <>
-          <div className="resize-top absolute top-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-green-500 hover:bg-opacity-30 transition-colors"></div>
-          <div className="resize-bottom absolute bottom-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-green-500 hover:bg-opacity-30 transition-colors"></div>
-          <div className="resize-left absolute left-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-green-500 hover:bg-opacity-30 transition-colors"></div>
-          <div className="resize-right absolute right-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-green-500 hover:bg-opacity-30 transition-colors"></div>
+          {/* Top and bottom resize bars with fade effect */}
+          <div 
+            className="resize-top absolute top-0 left-6 right-6 h-0.5 cursor-ns-resize bg-transparent hover:bg-green-600 hover:bg-opacity-40 transition-colors"
+            style={{
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(to right, transparent, rgba(22, 163, 74, 0.4) 20%, rgba(22, 163, 74, 0.4) 80%, transparent)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-bottom absolute bottom-0 left-6 right-6 h-0.5 cursor-ns-resize bg-transparent hover:bg-green-600 hover:bg-opacity-40 transition-colors"
+            style={{
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(to right, transparent, rgba(22, 163, 74, 0.4) 20%, rgba(22, 163, 74, 0.4) 80%, transparent)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
           
-          {/* Corner resize handles */}
-          <div className="resize-top resize-left absolute top-0 left-0 w-2 h-2 cursor-nw-resize bg-transparent hover:bg-green-500 hover:bg-opacity-50 transition-colors"></div>
-          <div className="resize-top resize-right absolute top-0 right-0 w-2 h-2 cursor-ne-resize bg-transparent hover:bg-green-500 hover:bg-opacity-50 transition-colors"></div>
-          <div className="resize-bottom resize-left absolute bottom-0 left-0 w-2 h-2 cursor-sw-resize bg-transparent hover:bg-green-500 hover:bg-opacity-50 transition-colors"></div>
-          <div className="resize-bottom resize-right absolute bottom-0 right-0 w-2 h-2 cursor-se-resize bg-transparent hover:bg-green-500 hover:bg-opacity-50 transition-colors"></div>
+          {/* Left and right resize bars with fade effect */}
+          <div 
+            className="resize-left absolute left-0 top-6 bottom-6 w-0.5 cursor-ew-resize bg-transparent hover:bg-green-600 hover:bg-opacity-40 transition-colors"
+            style={{
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(to bottom, transparent, rgba(22, 163, 74, 0.4) 20%, rgba(22, 163, 74, 0.4) 80%, transparent)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-right absolute right-0 top-6 bottom-6 w-0.5 cursor-ew-resize bg-transparent hover:bg-green-600 hover:bg-opacity-40 transition-colors"
+            style={{
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'linear-gradient(to bottom, transparent, rgba(22, 163, 74, 0.4) 20%, rgba(22, 163, 74, 0.4) 80%, transparent)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          
+          {/* Corner resize handles - quarter circles */}
+          <div 
+            className="resize-top resize-left absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-transparent hover:bg-green-600 hover:bg-opacity-50 transition-colors"
+            style={{
+              background: 'transparent',
+              borderBottomRightRadius: '100%'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(22, 163, 74, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-top resize-right absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-transparent hover:bg-green-600 hover:bg-opacity-50 transition-colors"
+            style={{
+              background: 'transparent',
+              borderBottomLeftRadius: '100%'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(22, 163, 74, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-bottom resize-left absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-transparent hover:bg-green-600 hover:bg-opacity-50 transition-colors"
+            style={{
+              background: 'transparent',
+              borderTopRightRadius: '100%'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(22, 163, 74, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
+          <div 
+            className="resize-bottom resize-right absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-transparent hover:bg-green-600 hover:bg-opacity-50 transition-colors"
+            style={{
+              background: 'transparent',
+              borderTopLeftRadius: '100%'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = 'rgba(22, 163, 74, 0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = 'transparent';
+            }}
+          ></div>
         </>
       )}
     </div>

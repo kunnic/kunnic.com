@@ -100,7 +100,7 @@
           {
             "type": "email",
             "label": "Email Me",
-            "url": "mailto:your-email@example.com",
+            "url": "mailto:kunnic@gmail.com",
             "color": "bg-blue-500 hover:bg-blue-600"
           },
           {

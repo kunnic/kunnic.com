@@ -136,3 +136,15 @@ html, body, #root {
 .test-window.interact-resizing button {
   pointer-events: auto;
 }
+
+/* Start Menu Animation */
+@keyframes startMenuSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

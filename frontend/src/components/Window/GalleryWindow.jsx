@@ -27,6 +27,13 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragCounter, setDragCounter] = useState(0); // Force re-render during drag
+
+  // Simple blue gradient for Gallery
+  const getPositionBasedGradient = () => {
+    return 'linear-gradient(to right, rgb(37, 99, 235), rgb(29, 78, 216))'; // blue-600 to blue-700
+  };
 
   // Fetch images from API
   useEffect(() => {
@@ -77,8 +84,7 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
         listeners: {
           start(event) {
             event.target.classList.add('interact-dragging');
-            // Bring window to front when dragging starts
-            if (onFocus) onFocus();
+            setIsDragging(true);
           },
           move(event) {
             const target = event.target;
@@ -119,9 +125,13 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
               x: boundedX, 
               y: boundedY 
             }));
+            
+            // Force re-render for gradient update
+            setDragCounter(prev => prev + 1);
           },
           end(event) {
             event.target.classList.remove('interact-dragging');
+            setIsDragging(false);
           }
         }
       })
@@ -241,7 +251,7 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
         listeners: {
           start(event) {
             event.target.classList.add('interact-dragging');
-            if (onFocus) onFocus();
+            setIsDragging(true);
           },
           move(event) {
             const target = event.target;
@@ -275,9 +285,13 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
               x: boundedX, 
               y: boundedY 
             }));
+            
+            // Force re-render for gradient update
+            setDragCounter(prev => prev + 1);
           },
           end(event) {
             event.target.classList.remove('interact-dragging');
+            setIsDragging(false);
           }
         }
       });
@@ -502,13 +516,32 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
           userSelect: 'none',
           zIndex: zIndex
         }}
-        onMouseDown={() => !isMinimized && onFocus && onFocus()}
-        onClick={() => !isMinimized && onFocus && onFocus()}
+        onMouseDown={(e) => {
+          // Only call onFocus if we're not interacting with buttons or resize handles
+          if (!isMinimized && onFocus && 
+              !e.target.closest('button') && 
+              !e.target.classList.contains('resize-left') &&
+              !e.target.classList.contains('resize-right') &&
+              !e.target.classList.contains('resize-top') &&
+              !e.target.classList.contains('resize-bottom')) {
+            onFocus();
+          }
+        }}
       >
         {/* Title Bar */}
         <div 
-          className="window-title-bar flex items-center justify-between px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white cursor-move select-none flex-shrink-0"
+          key={`title-bar-${dragCounter}`}
+          className="window-title-bar flex items-center justify-between px-3 py-2 text-white cursor-move select-none flex-shrink-0"
+          style={{ 
+            background: getPositionBasedGradient()
+          }}
           onDoubleClick={handleMaximize}
+          onMouseDown={(e) => {
+            // Call onFocus when clicking on the title bar (but not on buttons)
+            if (!e.target.closest('button') && onFocus && !isMinimized) {
+              onFocus();
+            }
+          }}
         >
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 bg-white/20 rounded-full flex items-center justify-center">
@@ -642,16 +675,111 @@ const GalleryWindow = ({ onClose, onFocus, zIndex = 40, onMinimize, isMinimized 
         {/* Resize handles - positioned at edges and corners - only show when not maximized */}
         {!windowState.isMaximized && (
           <>
-            <div className="resize-top absolute top-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-30 transition-colors"></div>
-            <div className="resize-bottom absolute bottom-0 left-2 right-2 h-1 cursor-ns-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-30 transition-colors"></div>
-            <div className="resize-left absolute left-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-30 transition-colors"></div>
-            <div className="resize-right absolute right-0 top-2 bottom-2 w-1 cursor-ew-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-30 transition-colors"></div>
+            {/* Top and bottom resize bars with fade effect */}
+            <div 
+              className="resize-top absolute top-0 left-6 right-6 h-0.5 cursor-ns-resize bg-transparent hover:bg-blue-600 hover:bg-opacity-40 transition-colors"
+              style={{
+                background: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'linear-gradient(to right, transparent, rgba(37, 99, 235, 0.4) 20%, rgba(37, 99, 235, 0.4) 80%, transparent)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+              }}
+            ></div>
+            <div 
+              className="resize-bottom absolute bottom-0 left-6 right-6 h-0.5 cursor-ns-resize bg-transparent hover:bg-blue-600 hover:bg-opacity-40 transition-colors"
+              style={{
+                background: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'linear-gradient(to right, transparent, rgba(37, 99, 235, 0.4) 20%, rgba(37, 99, 235, 0.4) 80%, transparent)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+              }}
+            ></div>
             
-            {/* Corner resize handles */}
-            <div className="resize-top resize-left absolute top-0 left-0 w-2 h-2 cursor-nw-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors"></div>
-            <div className="resize-top resize-right absolute top-0 right-0 w-2 h-2 cursor-ne-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors"></div>
-            <div className="resize-bottom resize-left absolute bottom-0 left-0 w-2 h-2 cursor-sw-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors"></div>
-            <div className="resize-bottom resize-right absolute bottom-0 right-0 w-2 h-2 cursor-se-resize bg-transparent hover:bg-blue-500 hover:bg-opacity-50 transition-colors"></div>
+            {/* Left and right resize bars with fade effect */}
+            <div 
+              className="resize-left absolute left-0 top-6 bottom-6 w-0.5 cursor-ew-resize bg-transparent hover:bg-blue-600 hover:bg-opacity-40 transition-colors"
+              style={{
+                background: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'linear-gradient(to bottom, transparent, rgba(37, 99, 235, 0.4) 20%, rgba(37, 99, 235, 0.4) 80%, transparent)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+              }}
+            ></div>
+            <div 
+              className="resize-right absolute right-0 top-6 bottom-6 w-0.5 cursor-ew-resize bg-transparent hover:bg-blue-600 hover:bg-opacity-40 transition-colors"
+              style={{
+                background: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'linear-gradient(to bottom, transparent, rgba(37, 99, 235, 0.4) 20%, rgba(37, 99, 235, 0.4) 80%, transparent)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+              }}
+            ></div>
+            
+            {/* Corner resize handles - quarter circles */}
+            <div 
+              className="resize-top resize-left absolute top-0 left-0 w-3 h-3 cursor-nw-resize bg-transparent hover:bg-blue-600 hover:bg-opacity-50 transition-colors"
+              style={{
+                background: 'transparent',
+                borderBottomRightRadius: '100%'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(37, 99, 235, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+              }}
+            ></div>
+            <div 
+              className="resize-top resize-right absolute top-0 right-0 w-3 h-3 cursor-ne-resize bg-transparent hover:bg-blue-600 hover:bg-opacity-50 transition-colors"
+              style={{
+                background: 'transparent',
+                borderBottomLeftRadius: '100%'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(37, 99, 235, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+              }}
+            ></div>
+            <div 
+              className="resize-bottom resize-left absolute bottom-0 left-0 w-3 h-3 cursor-sw-resize bg-transparent hover:bg-blue-600 hover:bg-opacity-50 transition-colors"
+              style={{
+                background: 'transparent',
+                borderTopRightRadius: '100%'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(37, 99, 235, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+              }}
+            ></div>
+            <div 
+              className="resize-bottom resize-right absolute bottom-0 right-0 w-3 h-3 cursor-se-resize bg-transparent hover:bg-blue-600 hover:bg-opacity-50 transition-colors"
+              style={{
+                background: 'transparent',
+                borderTopLeftRadius: '100%'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(37, 99, 235, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'transparent';
+              }}
+            ></div>
           </>
         )}
       </div>
