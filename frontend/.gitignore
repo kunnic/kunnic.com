@@ -110,3 +110,8 @@ src/assets/icons/phosphor-icons/
 # But keep essential small images
 !src/assets/images/kunnic_icon.png
 !src/assets/images/front_image.png
+# Keep essential SVG files used by the project
+!src/assets/react.svg
+!src/assets/icons/black_line_kunnic.svg
+!src/assets/icons/phosphor-icons/SVGs/**/*.svg
+!public/vite.svg
