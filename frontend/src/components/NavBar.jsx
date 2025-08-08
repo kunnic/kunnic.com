@@ -1,6 +1,6 @@
 // frontend/src/components/Navbar.jsx
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import LanguageSwitcher from './LanguageSwitcher';
 import Clock from './Clock';
